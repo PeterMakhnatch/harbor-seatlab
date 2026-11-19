@@ -18,6 +18,7 @@ from .partition import partition
 from .prefix import prefix
 from .replay import replay
 from .report import compare, describe
+from .sufficiency import audit_context
 from .viewwork import act
 
 
