@@ -44,3 +44,20 @@ jobs:
             any(.pairs[]; .id == "2-1" and .status == "action_changed" and
                 .boundary_turn == 9 and .target_action == {"action":null})
           ' "$out/native.json"
+      - name: Reconcile independent worker ledgers in reverse delivery order
+        run: |
+          out=$(mktemp -d)
+          tape=examples/meeting-sources.jsonl
+          seatlab partition "$tape" --shards 2 --policy intersection \
+            --transform-file examples/meeting-first8.json --out "$out/plan"
+          for i in 1 2; do
+            seatlab replay "$out/plan/part-000$i.jsonl" --policy intersection \
+              --transform-file "$out/plan/context.json" --out "$out/result-$i.jsonl" &
+            pids[$i]=$!
+          done
+          wait "${pids[1]}" && wait "${pids[2]}"
+          seatlab merge --plan "$out/plan/plan.json" --tape "$tape" \
+            --out "$out/merged.jsonl" "$out/result-2.jsonl" "$out/result-1.jsonl"
+          seatlab replay "$tape" --policy intersection --transform-file examples/meeting-first8.json \
+            --out "$out/serial.jsonl"
+          cmp "$out/merged.jsonl" "$out/serial.jsonl"
