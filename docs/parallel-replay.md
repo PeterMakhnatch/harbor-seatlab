@@ -26,11 +26,13 @@ seatlab calibrate examples/meeting.jsonl "$out/merged.jsonl" \
   --pairs examples/meeting-pairs.json --transform-file "$out/plan/context.json"
 ```
 
-Send each trusted worker only its own `part-*.jsonl`, its policy, and the context recipe if needed. Each input tape includes offline scoring data for the worker's SeatLab process. Only the role view enters the policy on stdin. Giving an executable a tape is not a sandbox. Do not give private tapes to untrusted workers.
+Send each trusted worker its own `part-*.jsonl`, the replay command, and the context recipe if needed. Keep the source and `plan.json` with the coordinator. A worker tape includes `observed` (the recorded native action, when known) **and** `answers` (the offline scoring table). Only the role view enters the policy on stdin. The worker can read its tape. Do not distribute it to untrusted workers or use it as a blind evaluation.
+
+For a custom policy, register `partition ... --policy external`. On each POSIX worker, run `seatlab replay part-0001.jsonl --out worker-a.jsonl --exec /absolute/path/to/policy`. Put `--exec` last. Put a context recipe or timeout **before** it. Distribute the exact policy artifact and arguments separately; record their digest with the plan. A named `--transform latest` also travels in the command, not in a recipe file.
 
 ## Recover after a worker stops
 
-Supply the available ledgers to `merge`. It reports the missing keys and does not create a merged ledger. Keep the original plan. Run only the unfinished part on a fresh worker. Give the coordinator exactly 1 result per key. An explicit `unmeasured` result is evidence that the worker did not return a score. It counts as a returned row, not as success, and is different from an absent worker result. A measured `null` action is different from both.
+Supply the available ledgers to `merge`. It reports the missing keys and does not create a merged ledger. If a local `replay` process stops before publication, it leaves **no** ledger for that part. Run that whole part again and supply exactly 1 ledger for it. Do not supply both an original and a replacement. A returned `unmeasured` row is complete evidence of a failed measurement, not a missing worker or a successful score. Do not replace it to improve the study. A measured `null` action is different from both.
 
 | Exit | Meaning | Ledger published? |
 | --- | --- | --- |
