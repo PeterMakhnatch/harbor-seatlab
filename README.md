@@ -2,7 +2,7 @@
 
 **Find the first decision that changes when you change one agent's context or partner.** SeatLab compares what each participant could see and what it actually did. It can replay a decision offline or compare two real team runs. The CLI uses the Python standard library. It needs no model, API key, Docker, or Harbor installation to analyze a recording.
 
-**Start with evidence:** [Open a verified study without Docker or keys](docs/evidence.md). It shows how a context change affects 200 five-person calendar cases, and why equal Hanabi scores can hide different team histories. The downloads include the underlying records and a command to check the results yourself.
+**[Open the live evidence gallery](https://petermakhnatch.github.io/harbor-seatlab/).** See why 4 Connect Four teams get the same payoff after different moves. Compare their decisions, then try the 200-case calendar study. No account or download is required. The [offline guide](docs/evidence.md) explains how to verify the underlying records.
 
 ## Try it on real decisions
 
