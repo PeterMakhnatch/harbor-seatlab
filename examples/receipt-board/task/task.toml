@@ -1,0 +1,27 @@
+schema_version = "1.4"
+artifacts = ["/logs/world/receipts.jsonl"]
+
+[task]
+name = "seatlab/receipt-board"
+description = "Two seats acknowledge their issued option view and post one receipt each to a shared world."
+keywords = ["seats", "docker-compose", "multi-agent", "receipts"]
+
+[metadata]
+difficulty = "easy"
+category = "example"
+tags = ["seats", "receipts", "calibration"]
+
+[verifier]
+timeout_sec = 60.0
+
+[agent]
+timeout_sec = 180.0
+
+[environment]
+build_timeout_sec = 180.0
+
+[agents.p1]
+under_test = true
+
+[agents.p2]
+under_test = true
