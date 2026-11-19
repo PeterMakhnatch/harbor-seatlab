@@ -37,3 +37,10 @@ jobs:
             .counts.withheld_suffix == 15 and
             any(.episodes[]; .id == "calendar:2-1:cursor:m1" and .boundary_turn == 9)
           ' "$out/forecast.json"
+          seatlab align examples/cursor-source.jsonl examples/cursor-target.jsonl \
+            --pairs examples/cursor-pairs.json > "$out/native.json"
+          jq -e '
+            .counts.pairs == 2 and .counts.matched == 1 and
+            any(.pairs[]; .id == "2-1" and .status == "action_changed" and
+                .boundary_turn == 9 and .target_action == {"action":null})
+          ' "$out/native.json"

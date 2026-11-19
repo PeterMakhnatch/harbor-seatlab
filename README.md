@@ -45,9 +45,11 @@ Once a policy changes an action, its team may not send the same next message. Te
 ```sh
 .venv/bin/seatlab prefix examples/cursor-source.jsonl \
   --exec "$PWD/.venv/bin/python" "$PWD/examples/cursor_policy.py" --budget-rounds 8
+.venv/bin/seatlab align examples/cursor-source.jsonl examples/cursor-target.jsonl \
+  --pairs examples/cursor-pairs.json
 ```
 
-These 2 real five-participant calendar negotiations have different outcomes under the candidate. On one recorded history it chooses to stop at decision 9. The other recorded history ends before the budget matters. See [the episode format and native alignment](docs/episodes.md).
+In case `2/1`, both native coordinators receive the same input at decision 9. One asks for the next reply; the other stops. In case `5/1`, all 5 decisions match. Across the [24 registered pairs](https://github.com/PeterMakhnatch/harbor-multiagent/blob/experiments/seatlab-cursor-budget/adapters/masbench-scheduling/prefix-results.md), all 20 forecast changes and 4 complete matches agree with fresh native trials. See [the episode format](docs/episodes.md).
 
 ## Bring a policy
 

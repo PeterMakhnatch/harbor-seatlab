@@ -1,0 +1,31 @@
+{
+  "pairs": [
+    {
+      "case_sha256": "13c846519b97a852c07bea0d8ce938929a225e7aaa522becfb88edf3b7c9b6d5",
+      "id": "2-1",
+      "role": "m1",
+      "source": {
+        "episode_sha256": "b1e2e74a9d99b0ec90d848ea1f92af17d81c726480f144fac91f4f18b5e922ce",
+        "native_trial_id": "676fca62-8b75-4ffa-b4a9-2e40acf6b390"
+      },
+      "target": {
+        "episode_sha256": "b54b1df1bf6581c872db1124ceede579194297fc48e40392d54ceb166ba04150",
+        "native_trial_id": "317153b7-9a22-47ca-a2ca-abb8aa86d370"
+      }
+    },
+    {
+      "case_sha256": "0e1a5e11166bf66668197fffe1b5e38a062d8416e664597d310983669f615f0b",
+      "id": "5-1",
+      "role": "m1",
+      "source": {
+        "episode_sha256": "722efdc1815d1563ebc39b3eb90ce10b24a63c383cf7146543281a43399a3149",
+        "native_trial_id": "cf3aeb81-d0b1-4444-9fb7-662e42957a9c"
+      },
+      "target": {
+        "episode_sha256": "d2e96fafecc70845f0c93e2ea41aba3d7e3ea701ccc9b11f508076579e275b98",
+        "native_trial_id": "499d48ac-94a5-49d6-9a89-f87fd54bb94e"
+      }
+    }
+  ],
+  "schema": "seatlab.episode-pairs/v1"
+}
