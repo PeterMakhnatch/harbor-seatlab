@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 """Build the SeatLab evidence gallery as a static GitHub Pages directory.
 
-The output holds only the hand-written front door (index.html, plus style.css
-when present) and three public HTML reports from the v0.10.0 release. Every
-report must match its SHA256 pin, whether it comes from the release or from
---assets-dir. The output directory must not exist yet; a failed build leaves
-nothing behind. Standard library only.
+The output contains the front page and pinned public HTML reports. Every report
+must match its SHA-256, whether downloaded or supplied with --assets-dir.
+The output directory must not exist; a failed build does not publish it.
 """
 
 from __future__ import annotations
@@ -24,11 +22,13 @@ import urllib.request
 from pathlib import Path
 
 SITE = Path(__file__).resolve().parent
-RELEASE = "https://github.com/PeterMakhnatch/harbor-seatlab/releases/download/v0.10.0/"
+RELEASE = "https://github.com/PeterMakhnatch/harbor-seatlab/releases/download"
 ASSETS = {
-    "calendar.html": "2bdf39992ffeec879ffa09cb0a1bc5479603f898f185e3bbe188c7d416e91310",
-    "team.html": "6488ff422ac2207362226c0d15d303e19dfaaec9dd88c6f164f93c64284d1722",
-    "pettingzoo.html": "81c9b8fb96ea50f52e3b296c3bba007e05ce58c02a7437b9bb468f8f2ab81ca3",
+    "calendar.html": ("v0.10.0", "2bdf39992ffeec879ffa09cb0a1bc5479603f898f185e3bbe188c7d416e91310"),
+    "team.html": ("v0.10.0", "6488ff422ac2207362226c0d15d303e19dfaaec9dd88c6f164f93c64284d1722"),
+    "pettingzoo.html": ("v0.10.0", "81c9b8fb96ea50f52e3b296c3bba007e05ce58c02a7437b9bb468f8f2ab81ca3"),
+    "policy-windows.html": ("v0.11.0", "e34f9e39a81b4fa100e1fc14b6ba8032d75d2754688534b875ff109f855155ce"),
+    "speaker-listener.html": ("v0.11.0", "c18907668db9d4747ef113ade165f35f908ece07666b6a528bc5f2200ba67e31"),
 }
 REQUIRED_PAGES = ("index.html",)
 OPTIONAL_PAGES = ("style.css",)
@@ -57,8 +57,9 @@ def _check(name: str, data: bytes) -> bytes:
     if len(data) > MAX_BYTES:
         raise BuildError(f"{name}: larger than {MAX_BYTES} bytes")
     digest = hashlib.sha256(data).hexdigest()
-    if digest != ASSETS[name]:
-        raise BuildError(f"{name}: sha256 {digest} does not match pin {ASSETS[name]}")
+    expected = ASSETS[name][1]
+    if digest != expected:
+        raise BuildError(f"{name}: sha256 {digest} does not match pin {expected}")
     return data
 
 
@@ -81,7 +82,7 @@ def _read_regular(path: Path, limit: int) -> bytes:
 
 def _fetch(name: str, timeout: float) -> bytes:
     """Fetch one report with a byte cap and a total deadline of `timeout` seconds."""
-    url = RELEASE + name
+    url = f"{RELEASE}/{ASSETS[name][0]}/{name}"
     request = urllib.request.Request(url, headers={"User-Agent": "seatlab-gallery-build"})
     deadline = time.monotonic() + timeout
     chunks: list[bytes] = []
