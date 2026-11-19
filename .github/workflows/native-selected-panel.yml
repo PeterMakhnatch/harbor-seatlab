@@ -1,0 +1,65 @@
+name: Repeat only the selected native regression panel
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened]
+    paths:
+      - '.github/workflows/native-selected-panel.yml'
+      - 'examples/panel-replication/**'
+permissions:
+  contents: read
+jobs:
+  repeat:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          repository: olamlabs/harbor-multiagent
+          ref: 6aeb609e31fd77e5f89ce3bcb018db8045520fb7
+          path: stock-olam
+          persist-credentials: false
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          repository: PeterMakhnatch/harbor-multiagent
+          ref: fa2d9c64f39bf46eeb692f35a0bec06dee201a61
+          path: game-source
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
+        with:
+          version: '0.13.9'
+      - name: Install stock Olam and independent analysis environment
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = x86_64
+          uv sync --project stock-olam --locked --no-dev --python 3.12
+          uv venv --python 3.12 "$RUNNER_TEMP/analyst"
+          uv pip install --python "$RUNNER_TEMP/analyst/bin/python" \
+            'https://github.com/PeterMakhnatch/harbor-seatlab/releases/download/v0.13.0/harbor_seatlab-0.13.0-py3-none-any.whl#sha256=d4ac30d19f4026a567fe9923196720da822debc994c237aefe23abed33a6c42e' \
+            -r game-source/adapters/pettingzoo-seats/presets/simple-spread-requirements.txt
+      - name: Download the immutable original recordings as data
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          curl -fsSL 'https://github.com/PeterMakhnatch/harbor-seatlab/releases/download/v0.13.0/native-speaker-listener-holdout.tar.gz' -o native.tgz
+          echo '5212d12fa6b1a57177abd6203e6a5d7fde66f4a923edc8902bc834811ce1060d  native.tgz' | sha256sum --check
+          mkdir source-study
+          "$RUNNER_TEMP/analyst/bin/python" -c 'import tarfile; t=tarfile.open("native.tgz"); t.extractall("source-study",filter="data");t.close()'
+      - name: Select the minimum and run the 5 named teams per chosen seed exactly once
+        run: |
+          set -euo pipefail
+          "$RUNNER_TEMP/analyst/bin/python" examples/panel-replication/repeat.py "$RUNNER_TEMP/source-study" \
+            --adapter "$PWD/game-source/adapters/pettingzoo-seats" --harbor "$PWD/stock-olam/.venv/bin/harbor" \
+            --root "$RUNNER_TEMP/new-runs" --public "$RUNNER_TEMP/panel-evidence" --expect-sha256 34b0bfde9b2c4e7a71e2906c9c17ba8d65239defe24cd9bd01575ff888bb0d7d
+      - name: Retain safe data even when a registered cell is missing
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: independent-selected-panel
+          path: ${{ runner.temp }}/panel-evidence/
+          if-no-files-found: error
+          retention-days: 14
