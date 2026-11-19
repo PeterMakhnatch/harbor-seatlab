@@ -1,0 +1,28 @@
+name: Verify SeatLab
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m pip install . pytest
+      - run: python -m pytest -q
+      - name: Compare two policies on real public observations
+        run: |
+          out=$(mktemp -d)
+          seatlab replay examples/dispatch.jsonl --out "$out/arrival.jsonl" --policy arrival
+          seatlab replay examples/dispatch.jsonl --out "$out/latest.jsonl" --policy arrival --transform latest
+          seatlab compare "$out/arrival.jsonl" "$out/latest.jsonl"
+          seatlab replay examples/meeting.jsonl --out "$out/observed.jsonl" --policy observed
+          seatlab replay examples/meeting.jsonl --out "$out/solver.jsonl" --policy intersection
+          seatlab compare "$out/observed.jsonl" "$out/solver.jsonl"

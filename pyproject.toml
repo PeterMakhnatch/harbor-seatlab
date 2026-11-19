@@ -1,0 +1,30 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "harbor-seatlab"
+version = "0.1.0"
+description = "Replay Harbor seat decisions against controlled context changes, without running the world."
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.11"
+authors = [{name = "Peter Makhnatch"}]
+dependencies = []
+
+[project.urls]
+Repository = "https://github.com/PeterMakhnatch/harbor-seatlab"
+
+[project.scripts]
+seatlab = "seatlab.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/seatlab"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 94
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
