@@ -35,8 +35,30 @@ _EPISODE_FIELDS = frozenset(Episode.__annotations__)
 _FRAME_FIELDS = frozenset(EpisodeFrame.__annotations__)
 
 
-def _episode(record: object) -> Episode:
-    row = wire._object(record, _EPISODE_FIELDS, "episode")
+def _validate_frame(value: object, expected_turn: int | None = None) -> EpisodeFrame:
+    label = f"frame {expected_turn}" if expected_turn is not None else "frame"
+    frame = wire._object(value, _FRAME_FIELDS, label)
+    turn = frame["turn"]
+    if expected_turn is not None:
+        if type(turn) is not int or turn != expected_turn:
+            raise wire.TapeError(f"{label}: turn must be a consecutive 1-based integer")
+    elif type(turn) is not int or turn < 1:
+        raise wire.TapeError("frame: turn must be a positive 1-based integer")
+    if frame["basis"] not in ("bound", "reconstructed"):
+        raise wire.TapeError(f"{label}: invalid basis")
+    view = frame["view"]
+    if not isinstance(view, dict):
+        raise wire.TapeError(f"{label}: view must be a JSON object")
+    wire._check_sha256(frame["view_sha256"], "view_sha256")
+    if frame["view_sha256"] != wire.digest(view):
+        raise wire.TapeError(f"{label}: view_sha256 does not match view")
+    if frame["observed"] is not None:
+        observation = wire._object(frame["observed"], wire._ACTION_FIELDS, "observed")
+        wire._action(observation["action"])
+    return cast(EpisodeFrame, frame)
+
+
+def _validate_episode_header(row: dict[str, object]) -> None:
     if row["schema"] != EPISODE_SCHEMA:
         raise wire.TapeError("invalid episode schema")
     # Apply the native identity rules without assigning provenance to the episode.
@@ -49,27 +71,19 @@ def _episode(record: object) -> Episode:
         }
     )
     wire._check_sha256(row["case_sha256"], "case_sha256")
-    wire._check_sha256(row["episode_sha256"], "episode_sha256")
     if type(row["closed"]) is not bool:
         raise wire.TapeError("closed must be a boolean")
+
+
+def _episode(record: object) -> Episode:
+    row = wire._object(record, _EPISODE_FIELDS, "episode")
+    _validate_episode_header(row)
+    wire._check_sha256(row["episode_sha256"], "episode_sha256")
     frames = row["frames"]
     if not isinstance(frames, list) or not frames:
         raise wire.TapeError("frames must be a nonempty array")
     for turn, value in enumerate(frames, 1):
-        frame = wire._object(value, _FRAME_FIELDS, f"frame {turn}")
-        if type(frame["turn"]) is not int or frame["turn"] != turn:
-            raise wire.TapeError(f"frame {turn}: turn must be a consecutive 1-based integer")
-        if frame["basis"] not in ("bound", "reconstructed"):
-            raise wire.TapeError(f"frame {turn}: invalid basis")
-        view = frame["view"]
-        if not isinstance(view, dict):
-            raise wire.TapeError(f"frame {turn}: view must be a JSON object")
-        wire._check_sha256(frame["view_sha256"], "view_sha256")
-        if frame["view_sha256"] != wire.digest(view):
-            raise wire.TapeError(f"frame {turn}: view_sha256 does not match view")
-        if frame["observed"] is not None:
-            observation = wire._object(frame["observed"], wire._ACTION_FIELDS, "observed")
-            wire._action(observation["action"])
+        _validate_frame(value, turn)
     payload = {field: value for field, value in row.items() if field != "episode_sha256"}
     if row["episode_sha256"] != wire.digest(payload):
         raise wire.TapeError("episode_sha256 does not match episode")

@@ -148,8 +148,12 @@ class InspectorTests(unittest.TestCase):
         self.assertIn('data-status="opaque"', document)
         self.assertIn("<dt>Independently reproduced</dt><dd>0</dd>", document)
         self.assertIn("<code>prediction_external_policy</code>", document)
-        for label in ("Input match", "Action match", "Score match"):
-            self.assertIn(f"<dt>{label}</dt><dd>Yes (not verified)</dd>", document)
+        self.assertIn("<dt>Input match</dt><dd>Yes (derived context)</dd>", document)
+        for label in ("Action match", "Score match"):
+            self.assertIn(
+                f"<dt>{label}</dt><dd>Yes (logged external result; execution not attested)</dd>",
+                document,
+            )
             self.assertNotIn(f"<dt>{label}</dt><dd>Yes</dd>", document)
         self.assertIn("<dt>Native action changed</dt><dd>No</dd>", document)
 

@@ -71,6 +71,10 @@ Run `seatlab context-audit examples/cursor-source.jsonl --field /round`. Keeping
 
 Use `seatlab partition --views-only` to give each worker only projected actor views and opaque request IDs. Workers run `seatlab act` and return actions, not scores. The coordinator keeps the original tape and grades the actions with `seatlab merge`. Missing, repeated, or incompatible receipts prevent publication. The output uses source order, not worker completion order. The [2-worker example](docs/parallel-replay.md) also covers trusted workers that receive full decision tapes.
 
+## Record your own Harbor task
+
+The [receipt board](examples/receipt-board/) is a complete 2-seat Olam task. Run 2 stock trials, export the views the actors acknowledged, and check a detached policy against the second trial. The [author guide](docs/authoring.md) shows the 3 Python helpers. The offline path needs no Harbor installation. The native path uses Docker and no model key.
+
 ## What belongs where
 
 | Job | Owner |

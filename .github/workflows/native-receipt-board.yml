@@ -1,0 +1,57 @@
+name: Run the stock Harbor receipt board
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'examples/receipt-board/**'
+      - 'src/seatlab/author.py'
+      - '.github/workflows/native-receipt-board.yml'
+permissions:
+  contents: read
+jobs:
+  native:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          repository: olamlabs/harbor-multiagent
+          ref: 6aeb609e31fd77e5f89ce3bcb018db8045520fb7
+          path: stock-olam
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: '0.13.9'
+      - name: Install the two tools in separate environments
+        run: |
+          uv sync --project stock-olam --locked --no-dev --python 3.12
+          uv venv --python 3.12 "$RUNNER_TEMP/analyst"
+          uv pip install --python "$RUNNER_TEMP/analyst/bin/python" .
+      - name: Run 2 native trials and compare their accepted views
+        run: |
+          run="$RUNNER_TEMP/receipt-board"
+          py="$RUNNER_TEMP/analyst/bin/python"
+          cli="$RUNNER_TEMP/analyst/bin/seatlab"
+          board="$PWD/examples/receipt-board"
+          "$py" "$board/prepare.py" "$run"
+          for arm in full first; do
+            stock-olam/.venv/bin/harbor trial start -c "$run/$arm.json"
+          done
+          "$py" "$board/export.py" "$(jq -r .full "$run/plan.json")" "$(jq -r .first "$run/plan.json")" --out "$run/export"
+          cd "$run/export"
+          jq -e '.source.team_reward == 1 and .target.team_reward == 1 and .source.native_trial_id != .target.native_trial_id' summary.json
+          "$cli" replay sources.jsonl --out predictions.jsonl --transform-file "$board/first.json" --exec "$py" "$board/policy.py"
+          "$cli" calibrate decisions.jsonl predictions.jsonl --pairs pairs.json --transform-file "$board/first.json" > calibration.json
+          jq -e '.counts.native_action_changed == 2 and .counts.reproduced == 0 and (.external_observations | .input_matches == 2 and .action_matches == 2 and .score_matches == 2)' calibration.json
+          "$cli" align source-episodes.jsonl target-episodes.jsonl --pairs episode-pairs.json --input-paths 4 > alignment.json
+          jq -e '.counts.input_changed == 2 and .counts.pairs == 2' alignment.json
+      - name: Retain the projected evidence only
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: receipt-board
+          path: ${{ runner.temp }}/receipt-board/export/
+          if-no-files-found: error
+          retention-days: 7

@@ -39,6 +39,15 @@ _COUNTS = (
     "coincident_action_matches",
     "reproduced",
 )
+_EXTERNAL_COUNTS = (
+    "predictions",
+    "inputs_compared",
+    "input_matches",
+    "actions_compared",
+    "action_matches",
+    "scores_compared",
+    "score_matches",
+)
 
 
 class _Side(TypedDict):
@@ -153,6 +162,36 @@ def _arm_report(side: _Side, row: wire.Decision | None) -> dict[str, object]:
     }
 
 
+def _external_observation(
+    prediction: wire.Result,
+    verification: str,
+    target: wire.Decision | None,
+    target_observed: wire.Observation | None,
+    target_score: wire.Score | None,
+    counts: dict[str, int],
+) -> dict[str, object]:
+    counts["predictions"] += 1
+    input_match = action_match = score_match = None
+    if verification == "derived" and target is not None and target["basis"] == "bound":
+        input_match = prediction["input_sha256"] == target["view_sha256"]
+        counts["inputs_compared"] += 1
+        counts["input_matches"] += input_match
+        if input_match and prediction["status"] == "measured" and target_observed is not None:
+            action_match = action_equal(prediction["action"], target_observed["action"])
+            counts["actions_compared"] += 1
+            counts["action_matches"] += action_match
+            if target_score is not None and prediction["score"] is not None:
+                score_match = prediction["score"] == target_score
+                counts["scores_compared"] += 1
+                counts["score_matches"] += score_match
+    return {
+        "input_match": input_match,
+        "action_match": action_match,
+        "score_match": score_match,
+        "execution_attested": False,
+    }
+
+
 def _evaluate(
     pair: _Pair,
     source: wire.Decision | None,
@@ -160,6 +199,7 @@ def _evaluate(
     prediction: wire.Result | None,
     context: ContextSpec | None,
     counts: dict[str, int],
+    external_counts: dict[str, int],
 ) -> dict[str, object]:
     reasons: list[str] = []
     counts["source_available" if source is not None else "source_missing"] += 1
@@ -193,6 +233,7 @@ def _evaluate(
             reasons.append("target_unscorable_action")
 
     prediction_report = None
+    external_observation = None
     opaque = False
     if prediction is not None:
         source_digest = pair["source"]["decision_sha256"]
@@ -206,6 +247,14 @@ def _evaluate(
             reasons.append("prediction_unmeasured")
         if prediction["policy"] == "external":
             reasons.append("prediction_external_policy")
+            external_observation = _external_observation(
+                prediction,
+                verification,
+                target,
+                target_observed,
+                target_score,
+                external_counts,
+            )
         if verification != "derived":
             reasons.append("prediction_context_unverified")
         opaque = prediction["policy"] == "external" or verification != "derived"
@@ -256,7 +305,7 @@ def _evaluate(
         counts["reproduced"] += reproduced
         status = "reproduced" if reproduced else "mismatch"
 
-    return {
+    row: dict[str, object] = {
         "id": pair["id"],
         "case_sha256": pair["source"]["case_sha256"],
         "source": _arm_report(pair["source"], source),
@@ -270,6 +319,9 @@ def _evaluate(
         "native_action_changed": native_action_changed,
         "reproduced": reproduced,
     }
+    if external_observation is not None:
+        row["external_observation"] = external_observation
+    return row
 
 
 def calibrate(
@@ -310,6 +362,18 @@ def calibrate(
       ``coincident_action_matches`` counts equal actions among those mismatches.
     * ``reproduced`` counts cases with equal input, action and score, not just
       equal reward. Missing, opaque and skipped cases do not count as failures.
+    * For cohorts containing external predictions, top-level
+      ``external_observations`` summarizes unattested external agreement without
+      adding ``reproduced`` credit, and each external pair includes
+      ``external_observation`` with ``execution_attested: false``.
+      ``predictions`` counts external prediction pairs. ``inputs_compared``
+      counts those with a derived input and a bound target, even if execution
+      failed or the target action is unknown; ``input_matches`` counts equal
+      digests. ``actions_compared`` counts matching inputs where the prediction
+      is measured (including explicit null) and the target action is known;
+      ``action_matches`` counts exact action equality. ``scores_compared``
+      counts those compared actions where the target action is scorable and the
+      prediction carries a score; ``score_matches`` counts equal score flags.
 
     Verify replay scores against source answers and score native target actions
     independently. Recompute built-in transforms and deterministic policies on
@@ -336,6 +400,7 @@ def calibrate(
 
     counts = dict.fromkeys(_COUNTS, 0)
     counts["pairs"] = len(manifest)
+    external_counts = dict.fromkeys(_EXTERNAL_COUNTS, 0)
     results = []
     for pair in manifest:
         source = _get_decision(pair["source"], decisions)
@@ -346,5 +411,14 @@ def calibrate(
             if source["answers"] != target["answers"]:
                 raise wire.TapeError(f"pair {pair['id']!r} has different offline answers")
         prediction = predictions.get(pair["source"]["key"])
-        results.append(_evaluate(pair, source, target, prediction, context, counts))
-    return {"schema": _RESULT_SCHEMA, "counts": counts, "pairs": results}
+        results.append(
+            _evaluate(pair, source, target, prediction, context, counts, external_counts)
+        )
+    report: dict[str, object] = {
+        "schema": _RESULT_SCHEMA,
+        "counts": counts,
+        "pairs": results,
+    }
+    if external_counts["predictions"]:
+        report["external_observations"] = external_counts
+    return report

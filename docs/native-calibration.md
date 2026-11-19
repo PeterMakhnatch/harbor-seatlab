@@ -36,3 +36,34 @@ For case `calendar:2-1`, the source coordinator chooses time `245`. The separate
 Add `--html "$out/report.html"` to any `calibrate` command to write a local inspector. Open that file in a browser. Filter by status or case ID, then expand a case to see the 3 actions and the native receipts. The HTML works without a network connection. The JSON report still goes to stdout. An existing HTML file is never replaced.
 
 The [native exporter](https://github.com/PeterMakhnatch/harbor-multiagent/tree/experiments/seatlab-masbench-calendars/adapters/masbench-scheduling) produces the pair manifest and both tapes from registered trial directories. Use `--all-cases` and the pinned dataset to retain missing scheduled cases. Do not use a complete local simulation to fill an absent native record.
+
+## Calibrating an external (`--exec`) policy
+
+`calibrate` never executes an external policy, so external predictions remain `status: "opaque"` and never earn strict `counts.reproduced` credit. To inspect how an external policy's logged predictions align with separately recorded native trials without trusting unattested execution, pass the same `--transform-file` recipe used during replay:
+
+```sh
+out=$(mktemp -d)
+seatlab replay examples/meeting-sources.jsonl \
+  --transform-file examples/meeting-first8.json \
+  --out "$out/ext-truncated.jsonl" \
+  --exec /absolute/path/to/your_policy.py
+seatlab calibrate examples/meeting.jsonl "$out/ext-truncated.jsonl" \
+  --pairs examples/meeting-pairs.json \
+  --transform-file examples/meeting-first8.json
+```
+
+Put `--exec` last on `seatlab replay`, after `--transform-file` and `--out`. Built-in-only cohorts omit all external observation fields and produce byte-identical v1 reports.
+
+When a cohort contains at least one external prediction, the report adds top-level `external_observations` counts and an `external_observation` object on each external prediction pair (`{"input_match", "action_match", "score_match", "execution_attested": false}`). Each comparison field is `true`, `false`, or `null` when not compared. Strict `counts` and `reproduced` remain unchanged.
+
+| `external_observations` counter | Denominator / eligibility rule |
+| --- | --- |
+| `predictions` | All pairs whose source prediction uses `policy: "external"`. |
+| `inputs_compared` | External predictions with a derived input (`input_verification == "derived"`, via `identity`, `latest`, or the supplied `--transform-file`) and a present target with `basis == "bound"`. Evaluated even if external execution failed (`status == "unmeasured"`) or the target action is unknown (`observed == null`). Excludes missing, unbound (`reconstructed` / `design`), or undescribed-context cases. |
+| `input_matches` | Subset of `inputs_compared` where `prediction.input_sha256 == target.view_sha256`. |
+| `actions_compared` | Subset of `input_matches` where the external prediction is `status == "measured"` (an explicit `null` action is a valid measured action) and the target has a recorded `observed` action. Never credits coincident actions when inputs differ. |
+| `action_matches` | Subset of `actions_compared` with type-exact equality (`prediction.action == target.observed.action` and identical JSON type). |
+| `scores_compared` | Subset of `actions_compared` where the native target action is scorable against offline `answers` and `prediction.score` is present. |
+| `score_matches` | Subset of `scores_compared` where `prediction.score == target.score`. |
+
+Every external pair sets `external_observation.execution_attested` to `false`: SeatLab checks the derived input commitment and offline score consistency, not which executable, model, or parameters produced the logged action.
