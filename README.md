@@ -38,6 +38,17 @@ Open `report.html` in the output directory to inspect each native pair. The file
 
 On these 4 cases, all 4 native actions change from a time to an explicit null. The replay reproduces all 4 target inputs, actions, and scores. The unchanged-input control reproduces none. This tests a deterministic channel change, not a model's general ability. See the [protocol and negative controls](docs/native-calibration.md).
 
+## Find where interactive replay stops
+
+Once a policy changes an action, its team may not send the same next message. Test the candidate on the common history, then compare a different native run. SeatLab does not assign a reward to the unseen future.
+
+```sh
+.venv/bin/seatlab prefix examples/cursor-source.jsonl \
+  --exec "$PWD/.venv/bin/python" "$PWD/examples/cursor_policy.py" --budget-rounds 8
+```
+
+These 2 real five-participant calendar negotiations have different outcomes under the candidate. On one recorded history it chooses to stop at decision 9. The other recorded history ends before the budget matters. See [the episode format and native alignment](docs/episodes.md).
+
 ## Bring a policy
 
 Use `--exec` only with an executable **you trust**. SeatLab is not a sandbox. The process has your operating-system permissions. The harness passes only the canonical role view on standard input. It does not pass the observed action, reference answers, run identity, CLI environment credentials, or source path as policy input. Executables do not run implicitly.

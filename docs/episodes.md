@@ -18,7 +18,7 @@ An episode is one JSONL record. Use one role and one native trial UUID per recor
 
 Each frame has exactly `turn`, `basis`, `view`, `view_sha256`, and `observed`. `view` is the complete JSON object delivered at this decision. The digest covers its canonical bytes. Use `bound` for an acknowledged view and `reconstructed` for one recovered indirectly. `observed: null` means that no accepted action is known. `observed: {"action": null}` is an accepted null action. Other actions are strings or integers; booleans are not integers here. See [canonical encoding](format.md) before implementing a producer in another language.
 
-The episode has no reference answers, reward table, simulator state or policy command. A digest checks consistency. It does not authenticate the producer or establish that an actor understood an input. Do not publish private role observations without permission.
+Do not add reference answers, reward tables, privileged simulator state or policy commands to an episode. A public world state belongs in the view only if the actor actually received it. A digest checks consistency. It does not authenticate the producer or establish that an actor used a field. Do not publish private role observations without permission.
 
 ## Run a different policy
 
@@ -41,3 +41,5 @@ seatlab align "$SOURCE_EPISODES" "$TARGET_EPISODES" --pairs "$EPISODE_PAIRS"
 The manifest uses `seatlab.episode-pairs/v1`. Its `pairs` array contains `{id, case_sha256, role, source, target}`. Each arm is either `{native_trial_id, episode_sha256}` or `null` if unavailable. Check the case identifier against the original registration, not just the completed cases. Keep missing arms in the manifest. Never pair a trial with itself.
 
 `align` checks the actual actor input before the action. Different inputs produce `input_changed`, not a policy attribution. An `action_changed` row identifies the first different native action after an equal history and equal current input. Different recorded lengths and open episodes are not evidence of disagreement. The command does not replay a policy or award a team score. Compare the boundary turn and action against the source-only forecast; read any later reward from the target's native verifier.
+
+To locate a change, add `--input-paths 12` to `align`. The optional report lists changed JSON Pointer paths in the two acknowledged views at the **first** changed input. It never inspects later frames for differences. It counts all changes and returns at most the requested number of paths. Object fields use sorted keys; arrays use numeric positions, not inferred identities. Paths show where the inputs differ, not why a participant acted. No values are returned. Field names can still disclose sensitive information. Keep these reports private when needed.

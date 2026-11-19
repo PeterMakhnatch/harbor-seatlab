@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Literal, TypedDict, cast
+from typing import Literal, NotRequired, TypedDict, cast
 from uuid import UUID
 
 from . import tape as wire
 from .episodes import Episode, read_episodes
+from .viewdiff import InputDiff, diff_input
 
 __all__ = ["align"]
 
@@ -59,6 +60,7 @@ class _AlignedPair(_Pair):
     target_action: wire.Observation | None
     source_view_sha256: str | None
     target_view_sha256: str | None
+    input_diff: NotRequired[InputDiff]
 
 
 _Registrations = dict[_Arm, dict[_Seat, _Pair]]
@@ -171,7 +173,9 @@ def _get_episode(
     return None if receipt is None else episodes[receipt["native_trial_id"], role]
 
 
-def _align_pair(pair: _Pair, source: Episode | None, target: Episode | None) -> _AlignedPair:
+def _align_pair(
+    pair: _Pair, source: Episode | None, target: Episode | None, *, input_paths: int | None
+) -> _AlignedPair:
     result: _AlignedPair = {
         **pair,
         "status": "missing",
@@ -196,6 +200,10 @@ def _align_pair(pair: _Pair, source: Episode | None, target: Episode | None) -> 
         else:
             if left_view != right_view:
                 result["status"] = "input_changed"
+                if input_paths is not None:
+                    result["input_diff"] = diff_input(
+                        left["view"], right["view"], limit=input_paths
+                    )
             else:
                 a, b = left_action["action"], right_action["action"]
                 if type(a) is type(b) and a == b:
@@ -219,7 +227,9 @@ def _align_pair(pair: _Pair, source: Episode | None, target: Episode | None) -> 
     return result
 
 
-def align(source: Path, target: Path, pairs: Path) -> dict[str, object]:
+def align(
+    source: Path, target: Path, pairs: Path, *, input_paths: int | None = None
+) -> dict[str, object]:
     """Align a registered cohort of independent native episode tapes.
 
     Return the matched turn count and the first boundary for each pair. Only
@@ -227,7 +237,12 @@ def align(source: Path, target: Path, pairs: Path) -> dict[str, object]:
     At a shared boundary, report the recorded view digests and, if eligible,
     the actual action envelopes. A length boundary has no paired frame. Fully
     matched and open prefixes have no observed boundary. Never infer rewards.
+
+    With input_paths, report changes in the two views at a changed-input
+    boundary, without reporting field values.
     """
+    if input_paths is not None and not (type(input_paths) is int and 1 <= input_paths <= 128):
+        raise wire.TapeError("input_paths must be an integer from 1 to 128")
     manifest, expected = _read_pairs(pairs)
     source_episodes = _read_arm(source, "source", expected["source"])
     target_episodes = _read_arm(target, "target", expected["target"])
@@ -239,7 +254,7 @@ def align(source: Path, target: Path, pairs: Path) -> dict[str, object]:
         role = pair["role"]
         left = _get_episode(pair["source"], role, source_episodes)
         right = _get_episode(pair["target"], role, target_episodes)
-        row = _align_pair(pair, left, right)
+        row = _align_pair(pair, left, right, input_paths=input_paths)
         counts[row["status"]] += 1
         counts["matched_prefix"] += row["matched_prefix"]
         results.append(row)

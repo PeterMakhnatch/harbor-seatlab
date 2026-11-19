@@ -13,6 +13,7 @@ from .calibration import calibrate
 from .context import ContextSpec
 from .handoff import from_handoff
 from .inspector import write_inspector
+from .prefix import prefix
 from .replay import replay
 from .report import compare, describe
 
@@ -66,6 +67,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     alignment.add_argument(
         "--pairs", type=Path, required=True, help="registered episode receipts"
     )
+    alignment.add_argument(
+        "--input-paths",
+        metavar="N",
+        type=int,
+        help="list at most N changed JSON Pointer paths at the first input boundary (1–128)",
+    )
     pair = commands.add_parser(
         "compare", help="compare complete results against the same recorded views"
     )
@@ -86,7 +93,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         type=Path,
         help="recipe to independently check predicted actor inputs",
     )
-    calibration.add_argument("--html", type=Path, help="also write a new, self-contained HTML report")
+    calibration.add_argument(
+        "--html", type=Path, help="also write a new, self-contained HTML report"
+    )
     args = parser.parse_args(argv)
     try:
         if args.command == "from-handoff":
@@ -96,7 +105,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         elif args.command == "compare":
             result = compare(args.baseline, args.candidate)
         elif args.command == "align":
-            result = align(args.source, args.target, args.pairs)
+            result = align(args.source, args.target, args.pairs, input_paths=args.input_paths)
         elif args.command == "calibrate":
             context = ContextSpec.load(args.transform_file) if args.transform_file else None
             result = calibrate(args.tape, args.predictions, args.pairs, context=context)
