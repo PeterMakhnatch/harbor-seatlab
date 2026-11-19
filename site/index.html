@@ -17,6 +17,7 @@
     <a class="brand" href="./" aria-current="page">SeatLab <span>evidence gallery</span></a>
     <nav aria-label="Live reports">
       <ul>
+        <li><a href="#regression">Regression panel</a></li>
         <li><a href="pettingzoo.html">PettingZoo</a></li>
         <li><a href="calendar.html">Calendar</a></li>
         <li><a href="team.html">Hanabi &amp; kitchen</a></li>
@@ -81,6 +82,18 @@
       </div>
       <p class="fine">Source: <a href="https://raw.githubusercontent.com/PeterMakhnatch/harbor-multiagent/feat/seatlab-pettingzoo/adapters/pettingzoo-seats/results/primary.json"><code>results/primary.json</code></a>. All 8 primary cells match a direct run of the official PettingZoo API.</p>
     </details>
+  </section>
+
+  <section id="regression" class="stories wrap" aria-labelledby="panel-title">
+    <p class="eyebrow">A smaller native regression run</p>
+    <h2 id="panel-title">Which 2 worlds should CI run?</h2>
+    <p class="sub">A listener ignored every message. It still made exactly the informed moves on 5 of 12 worlds. All 60 teams earned completion reward 1. One world cannot exercise both a matching listener and a different listener.</p>
+    <article class="story" aria-labelledby="case-select-title">
+      <p class="kicker">12 fixed worlds &middot; 5 teams each &middot; 9 registered behaviors</p>
+      <h3 id="case-select-title"><a href="observed-panel.html">Seeds 101 and 102 cover all 9 observed criteria.</a></h3>
+      <p>The exact selection needs 2 worlds, or 10 native trials at 5 teams per world. There are 35 minimum pairs. SeatLab chooses the first by case label. This is a regression panel, not a population estimate.</p>
+      <p class="go"><a href="observed-panel.html">Inspect the selected cases &rarr;</a> <a class="src" href="holdout.html">See all 96 native measurements</a> <a class="src" href="https://github.com/PeterMakhnatch/harbor-seatlab/blob/v0.13.0/docs/measured-panel.md">Run it offline</a></p>
+    </article>
   </section>
 
   <section class="split wrap" aria-labelledby="sv-title">
