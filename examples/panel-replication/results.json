@@ -1,0 +1,95 @@
+{
+  "adapter_commit": "fa2d9c64f39bf46eeb692f35a0bec06dee201a61",
+  "audit": {
+    "counts": {
+      "actions": 400,
+      "joint": 200,
+      "native": 10,
+      "role_returns": 20,
+      "same_actions": 400,
+      "same_return": 20,
+      "same_views": 400
+    },
+    "different_cells": [],
+    "max_return_gap": 0.0
+  },
+  "candidate_design_sha256": "6fade1255de1cfbda0bf2e741523d8af7f7629c0d530a418bd5241c78ab2bc55",
+  "candidate_study_sha256": "f69b4276ad27a50a14ab80dd67e832907048425b92ddb9d0317a1233a7cc51ce",
+  "criteria_counts": {
+    "actions_exact_cells": 10,
+    "complete_cells": 10,
+    "criteria_agree": 18,
+    "criteria_disagree": 0,
+    "criteria_total": 18,
+    "criteria_unknown": 0,
+    "distinct_fresh_trial_ids": 10,
+    "order_equal_cells": 10,
+    "planned_cells": 10,
+    "returns_within_1e-6_cells": 10,
+    "valid_fresh_cells": 10,
+    "views_exact_cells": 10
+  },
+  "inference_unit": "native_case",
+  "native_completion_successes": 10,
+  "native_linux_workflow": "https://github.com/PeterMakhnatch/harbor-seatlab/actions/runs/44549885787",
+  "per_cell": {
+    "s101-plain-blind": {
+      "candidate_trial_id": "322185ee-8ec2-450c-9d0b-e6976b21c3ab",
+      "case_sha256": "6fc0c8a8a557ce7f7d98c35d8cb8212a66685e1b470786844afb0e05455d6d43",
+      "source_trial_id": "f639117d-4859-4999-8cfd-21ea4b1cb9ed"
+    },
+    "s101-plain-plain": {
+      "candidate_trial_id": "cde7b3e3-37e1-43a3-a087-850e81f1ec39",
+      "case_sha256": "6fc0c8a8a557ce7f7d98c35d8cb8212a66685e1b470786844afb0e05455d6d43",
+      "source_trial_id": "fc24703a-9d2a-424c-88a8-7cbe5a8b3a6e"
+    },
+    "s101-plain-rotate": {
+      "candidate_trial_id": "ee68b9b9-67d0-4e60-bfb6-7188848daf03",
+      "case_sha256": "6fc0c8a8a557ce7f7d98c35d8cb8212a66685e1b470786844afb0e05455d6d43",
+      "source_trial_id": "13e6b186-2628-4587-9a68-59bb7ba33f51"
+    },
+    "s101-rotate-plain": {
+      "candidate_trial_id": "92bcdeb4-876b-4628-945e-51791b58dbeb",
+      "case_sha256": "6fc0c8a8a557ce7f7d98c35d8cb8212a66685e1b470786844afb0e05455d6d43",
+      "source_trial_id": "92a9726f-7936-452d-896a-5aabd7b4e3ed"
+    },
+    "s101-rotate-rotate": {
+      "candidate_trial_id": "aafcf4a7-aca1-415b-8895-41fe3adf8ad3",
+      "case_sha256": "6fc0c8a8a557ce7f7d98c35d8cb8212a66685e1b470786844afb0e05455d6d43",
+      "source_trial_id": "ea3dc9b2-84e7-4f92-8aa7-14aa6af9c428"
+    },
+    "s102-plain-blind": {
+      "candidate_trial_id": "a408464b-66c2-4ab5-a6e9-42966e9b8c34",
+      "case_sha256": "10076781d8104f01876988d5fcb9363c95fea06a495ed84226e675f17709ae56",
+      "source_trial_id": "9a11628c-734d-4613-a123-e729c52564c7"
+    },
+    "s102-plain-plain": {
+      "candidate_trial_id": "5b47fc93-77b5-482a-bfa4-287ccdab59e3",
+      "case_sha256": "10076781d8104f01876988d5fcb9363c95fea06a495ed84226e675f17709ae56",
+      "source_trial_id": "e93e6424-0cc6-4dac-956a-487309a74deb"
+    },
+    "s102-plain-rotate": {
+      "candidate_trial_id": "09b4381f-e5a5-4f48-a501-cf1648e2bf7b",
+      "case_sha256": "10076781d8104f01876988d5fcb9363c95fea06a495ed84226e675f17709ae56",
+      "source_trial_id": "25587431-5247-4a3e-ad30-ddda24f40024"
+    },
+    "s102-rotate-plain": {
+      "candidate_trial_id": "54375f46-757b-4c5f-9f85-41dbadad5526",
+      "case_sha256": "10076781d8104f01876988d5fcb9363c95fea06a495ed84226e675f17709ae56",
+      "source_trial_id": "ee252c12-1990-4434-9b82-79f840569d00"
+    },
+    "s102-rotate-rotate": {
+      "candidate_trial_id": "f722b75d-0872-4eb8-8f7f-c625e6a9a878",
+      "case_sha256": "10076781d8104f01876988d5fcb9363c95fea06a495ed84226e675f17709ae56",
+      "source_trial_id": "d5b425ae-c43a-423d-a28f-c1b1f9e5ef12"
+    }
+  },
+  "schema": "seatlab.native-panel-independent-audit/v1",
+  "selected_worlds": [
+    "s101",
+    "s102"
+  ],
+  "source_study_sha256": "34b0bfde9b2c4e7a71e2906c9c17ba8d65239defe24cd9bd01575ff888bb0d7d",
+  "source_uuid_count": 60,
+  "upstream_harbor": "6aeb609e31fd77e5f89ce3bcb018db8045520fb7"
+}
