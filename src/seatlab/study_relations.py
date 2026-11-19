@@ -22,7 +22,7 @@ __all__ = ["export_relations"]
 RELATION_SCHEMA: Final = "seatlab.study-relation/v1"
 SUMMARY_SCHEMA: Final = "seatlab.study-relations-summary/v1"
 
-RelationKind = Literal["calibration", "alignment", "team-alignment"]
+RelationKind = Literal["calibration", "alignment", "team-alignment", "role-trajectory"]
 BoundaryUnit = Literal["world_step", "role_turn"]
 
 
@@ -173,6 +173,50 @@ def _team_rows(
     ]
 
 
+def _action_changed(report: Mapping[str, object]) -> bool | None:
+    """Return whether an observed accepted action differs, or null when that is not settled.
+
+    Other view dimensions do not decide an observed action. A negative requires
+    a complete schedule, at least one compared action, and no unknown action.
+    """
+    action = cast(Mapping[str, int | None], report["accepted_action"])
+    if cast(int, action["different"]) > 0:
+        return True
+    if (
+        report["status"] == "complete"
+        and cast(int, report["role_decisions"]) > 0
+        and action["unknown"] == 0
+    ):
+        return False
+    return None
+
+
+def _trajectory_rows(
+    check: Check, report: Mapping[str, object], report_sha256: str, study_sha256: str
+) -> list[StudyRelation]:
+    schedule = cast(Mapping[str, int | None], report["schedule"])
+    return [
+        _row(
+            study_sha256=study_sha256,
+            report_sha256=report_sha256,
+            check_id=check["id"],
+            kind="role-trajectory",
+            pair_index=1,
+            case_sha256=cast(str, report["case_sha256"]),
+            source_native_trial_id=cast(str, report["source_native_trial_id"]),
+            target_native_trial_id=cast(str, report["target_native_trial_id"]),
+            role=cast(str, report["role"]),
+            status=cast(str, report["status"]),
+            boundary_unit="world_step",
+            boundary=schedule["boundary_step"],
+            # Equal schedules are not a common prefix of decisions.
+            matched_prefix=None,
+            native_action_changed=_action_changed(report),
+            reproduced=None,
+        )
+    ]
+
+
 def _rows(
     check: Check, report: Mapping[str, object], report_sha256: str, study_sha256: str
 ) -> list[StudyRelation]:
@@ -181,6 +225,8 @@ def _rows(
         return _calibration_rows(check, report, report_sha256, study_sha256)
     if kind == "alignment":
         return _alignment_rows(check, report, report_sha256, study_sha256)
+    if kind == "role-trajectory":
+        return _trajectory_rows(check, report, report_sha256, study_sha256)
     return _team_rows(check, report, report_sha256, study_sha256)
 
 

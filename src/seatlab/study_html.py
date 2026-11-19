@@ -68,6 +68,31 @@ _TEAM = frozenset(
         "length_changed",
     }
 )
+_TRAJ = frozenset(
+    {
+        "id",
+        "kind",
+        "report_sha256",
+        "role",
+        "fields",
+        "status",
+        "schedule",
+        "role_decisions",
+        "raw_view",
+        "selected_view",
+        "accepted_action",
+    }
+)
+_TRAJ_STATUS = frozenset({"complete", "order_changed", "length_changed", "open"})
+_SCHED = frozenset({"matched_steps", "boundary_step", "source_steps", "target_steps"})
+_DIMS = (
+    ("raw_view", "Raw view"),
+    ("selected_view", "Selected view"),
+    ("accepted_action", "Accepted action"),
+)
+_DIM_KEYS = frozenset(
+    {"equal", "different", "unknown", "first_different_step", "first_unknown_step"}
+)
 _CSS = (
     ":root{color-scheme:light dark;--bg:#f6f5f2;--card:#fff;--ink:#1c1917;"
     "--line:#c8c4be;--focus:#1d4ed8}"
@@ -263,6 +288,114 @@ def _team(item: dict[str, object]) -> tuple[str, str]:
     return f"<dl>{rows}{_cell('Boundary step', step)}</dl>", scan
 
 
+def _step(value: object, name: str) -> int | None:
+    if value is None:
+        return None
+    if type(value) is not int or value < 1:
+        raise ValueError(f"{name} must be a positive integer or null")
+    return value
+
+
+def _missing_step(step: int | None) -> str:
+    return "Not reached. The missing value is not zero." if step is None else str(step)
+
+
+def _selected(value: object) -> str:
+    if value is None:
+        return _cell(
+            "Selected fields", "None. The selected view is the complete raw role view."
+        )
+    if type(value) is not list or not value:
+        raise ValueError("fields must be null or a non-empty list")
+    items = []
+    for pointer in value:
+        if type(pointer) is not str or not pointer.startswith("/"):
+            raise ValueError("fields must contain JSON Pointers")
+        items.append(f"<li>{_code(pointer)}</li>")
+    if len(set(value)) != len(value):
+        raise ValueError("fields must be unique")
+    return _cell(
+        "Selected fields", f"{len(value)} named, in canonical order<ul>{''.join(items)}</ul>"
+    )
+
+
+def _dimension(raw: object, label: str, decisions: int, matched: int) -> str:
+    dim = _mapping(raw, label)
+    if set(dim) != _DIM_KEYS:
+        raise ValueError(f"{label} must have exactly the five trajectory keys")
+    tally = _nums(dim, ("equal", "different", "unknown"), label)
+    if sum(tally.values()) != decisions:
+        raise ValueError(f"{label} counts must sum to role decisions")
+    first_different = _step(dim["first_different_step"], f"{label}.first_different_step")
+    first_unknown = _step(dim["first_unknown_step"], f"{label}.first_unknown_step")
+    if any(step is not None and step > matched for step in (first_different, first_unknown)):
+        raise ValueError(f"{label} first step exceeds the shared schedule")
+    if (first_different is None) != (tally["different"] == 0):
+        raise ValueError(f"{label}.first_different_step does not match its count")
+    if (first_unknown is None) != (tally["unknown"] == 0):
+        raise ValueError(f"{label}.first_unknown_step does not match its count")
+    rows = ""
+    for key, term in (("equal", "Equal"), ("different", "Different"), ("unknown", "Unknown")):
+        count = tally[key]
+        rows += _cell(term, f"{count} of {decisions} role decisions" if decisions else "0")
+    rows += _cell("First different step", _missing_step(first_different))
+    rows += _cell("First unknown step", _missing_step(first_unknown))
+    return f"<h3>{escape(label, quote=True)}</h3><dl>{rows}</dl>"
+
+
+def _trajectory(item: dict[str, object]) -> tuple[str, str]:
+    if set(item) != _TRAJ:
+        raise ValueError("role-trajectory check must have exactly the summary keys")
+    role, status = item["role"], item["status"]
+    if type(role) is not str or not role:
+        raise ValueError("role must be a non-empty string")
+    if status not in _TRAJ_STATUS:
+        raise ValueError("role-trajectory status is not supported")
+    decisions = item["role_decisions"]
+    if type(decisions) is not int or decisions < 0:
+        raise ValueError("role_decisions must be a non-negative integer")
+    schedule = _mapping(item["schedule"], "schedule")
+    if set(schedule) != _SCHED:
+        raise ValueError("schedule must have exactly the four trajectory keys")
+    counts = _nums(schedule, ("matched_steps", "source_steps", "target_steps"), "schedule")
+    matched, source, target = (
+        counts["matched_steps"],
+        counts["source_steps"],
+        counts["target_steps"],
+    )
+    boundary = _step(schedule["boundary_step"], "schedule.boundary_step")
+    if decisions > matched:
+        raise ValueError("role decisions exceed the shared schedule")
+    if matched > min(source, target):
+        raise ValueError("matched steps exceed a schedule length")
+    if boundary is None:
+        if status in ("order_changed", "length_changed") or not source == target == matched:
+            raise ValueError("schedule has no boundary but is not fully matched")
+    elif status == "complete" or boundary != matched + 1 or boundary > max(source, target):
+        raise ValueError("schedule boundary is inconsistent")
+    dims = "".join(_dimension(item[key], label, decisions, matched) for key, label in _DIMS)
+    shared = (
+        _cell("Role", _code(role))
+        + _selected(item["fields"])
+        + _cell("Schedule status", _words(str(status)))
+        + _cell("Matched world steps", f"{matched} of {source} source, {target} target steps")
+        + _cell("Boundary step", _missing_step(boundary))
+        + _cell("Role decisions", str(decisions))
+    )
+    body = (
+        "<h3>Shared schedule</h3>"
+        "<p>Status describes the world-step schedule. It is not a reward or a score. "
+        "The three dimensions below are independent and are not added together. "
+        "They are observations of one role. They do not give a cause.</p>"
+        f"<dl>{shared}</dl>{dims}"
+    )
+    scan = (
+        f"Role {escape(role, quote=True)}: {_words(str(status))} schedule, "
+        f'<span class="num">{decisions}</span> role decisions'
+    )
+    return body, scan
+
+
 def _check(item: object, seen: set[str]) -> str:
     check = _mapping(item, "check")
     check_id = _ident(check.get("id"))
@@ -270,11 +403,13 @@ def _check(item: object, seen: set[str]) -> str:
         raise ValueError("check id is duplicated")
     seen.add(check_id)
     kind = check.get("kind")
-    if kind not in ("calibration", "alignment", "team-alignment"):
+    if kind not in ("calibration", "alignment", "team-alignment", "role-trajectory"):
         raise ValueError("check kind is not supported")
     digest = _sha(check.get("report_sha256"), "report digest")
     if kind == "team-alignment":
         body, scan = _team(check)
+    elif kind == "role-trajectory":
+        body, scan = _trajectory(check)
     else:
         keys = _CAL if kind == "calibration" else ("pairs", "matched_prefix", *_ALIGN)
         counts = _nums(check.get("counts"), keys, "counts")

@@ -7,6 +7,7 @@ from collections.abc import Sequence
 from typing import Literal, NotRequired, TypeAlias, TypedDict, cast
 
 from . import tape as wire
+from .projection import Projection
 
 RECIPE_SCHEMA = "seatlab.study-recipe/v1"
 MANIFEST_SCHEMA = "seatlab.study/v1"
@@ -50,7 +51,20 @@ class TeamAlignmentCheck(TypedDict):
     input_paths: NotRequired[int]
 
 
-Check: TypeAlias = CalibrationCheck | AlignmentCheck | TeamAlignmentCheck
+class RoleTrajectoryCheck(TypedDict):
+    id: str
+    kind: Literal["role-trajectory"]
+    source: str
+    target: str
+    source_order: str
+    target_order: str
+    role: str
+    fields: NotRequired[list[str]]
+
+
+Check: TypeAlias = (
+    CalibrationCheck | AlignmentCheck | TeamAlignmentCheck | RoleTrajectoryCheck
+)
 
 
 class FileReceipt(TypedDict):
@@ -76,8 +90,13 @@ _TEAM_ALIGNMENT_REQUIRED = frozenset(
     {"id", "kind", "source", "target", "source_order", "target_order"}
 )
 _TEAM_ALIGNMENT_ALLOWED = _TEAM_ALIGNMENT_REQUIRED | frozenset({"input_paths"})
+_ROLE_TRAJECTORY_REQUIRED = frozenset(
+    {"id", "kind", "source", "target", "source_order", "target_order", "role"}
+)
+_ROLE_TRAJECTORY_ALLOWED = _ROLE_TRAJECTORY_REQUIRED | frozenset({"fields"})
 _UNSUPPORTED_KIND_ERROR = (
-    "study check kind must be 'calibration', 'alignment', or 'team-alignment'"
+    "study check kind must be 'calibration', 'alignment', 'team-alignment', "
+    "or 'role-trajectory'"
 )
 
 __all__ = [
@@ -92,6 +111,7 @@ __all__ = [
     "MAX_PATH_LENGTH",
     "MIN_INPUT_PATHS",
     "RECIPE_SCHEMA",
+    "RoleTrajectoryCheck",
     "StudyManifest",
     "TeamAlignmentCheck",
     "parse_manifest",
@@ -143,6 +163,30 @@ def _input_paths(value: object, kind: str, check_id: str) -> int:
             f"from {MIN_INPUT_PATHS} to {MAX_INPUT_PATHS}"
         )
     return value
+
+
+def _role(value: object, check_id: str) -> str:
+    if type(value) is not str or wire._ROLE.fullmatch(value) is None:
+        raise wire.TapeError(
+            f"role-trajectory check {check_id!r} role must be a short ASCII identifier"
+        )
+    return value
+
+
+def _pointer_fields(value: object, check_id: str) -> list[str]:
+    """Validate with the native Projection rules and keep the author's pointer order."""
+    if type(value) is not list or not value:
+        raise wire.TapeError(
+            f"role-trajectory check {check_id!r} fields must be a nonempty array"
+        )
+    pointers = cast(list[str], value)
+    try:
+        Projection(pointers)
+    except ValueError as exc:
+        raise wire.TapeError(
+            f"role-trajectory check {check_id!r} fields are invalid: {exc}"
+        ) from exc
+    return pointers
 
 
 def _parse_check(value: object) -> Check:
@@ -203,6 +247,24 @@ def _parse_check(value: object) -> Check:
                 fields["input_paths"], "team-alignment", check_id
             )
         return team
+    if kind == "role-trajectory":
+        if not _ROLE_TRAJECTORY_REQUIRED <= keys <= _ROLE_TRAJECTORY_ALLOWED:
+            raise wire.TapeError(
+                "role-trajectory check must have exactly the documented fields"
+            )
+        check_id = _check_id(fields["id"])
+        trajectory: RoleTrajectoryCheck = {
+            "id": check_id,
+            "kind": "role-trajectory",
+            "source": validate_path(fields["source"]),
+            "target": validate_path(fields["target"]),
+            "source_order": validate_path(fields["source_order"]),
+            "target_order": validate_path(fields["target_order"]),
+            "role": _role(fields["role"], check_id),
+        }
+        if "fields" in fields:
+            trajectory["fields"] = _pointer_fields(fields["fields"], check_id)
+        return trajectory
     raise wire.TapeError(_UNSUPPORTED_KIND_ERROR)
 
 
@@ -238,7 +300,7 @@ def referenced_paths(checks: Sequence[Check]) -> list[str]:
             paths.add(validate_path(check["source"]))
             paths.add(validate_path(check["target"]))
             paths.add(validate_path(check["pairs"]))
-        elif check["kind"] == "team-alignment":
+        elif check["kind"] in ("team-alignment", "role-trajectory"):
             paths.add(validate_path(check["source"]))
             paths.add(validate_path(check["target"]))
             paths.add(validate_path(check["source_order"]))

@@ -47,6 +47,7 @@ FROM native WHERE referenced
 """
 _UNITS: dict[str, str | None] = {
     "team-alignment": "world_step",
+    "role-trajectory": "world_step",
     "alignment": "role_turn",
     "calibration": None,
 }
@@ -150,11 +151,13 @@ def _relation(
         )
     pair_counts[check] = index
     role = raw["role"]
-    if kind == "alignment":
+    if kind in ("alignment", "role-trajectory"):
         if not isinstance(role, str) or not role:
-            raise ValueError(f"{where}: alignment requires a role label")
+            raise ValueError(f"{where}: {kind} requires a role label")
     elif role is not None:
-        raise ValueError(f"{where}: only alignment relations carry a role")
+        raise ValueError(
+            f"{where}: only role alignment and role trajectory relations carry a role"
+        )
     if not isinstance(raw["status"], str) or not raw["status"]:
         raise ValueError(f"{where}: status must be a non-empty string")
     _digest(raw["case_sha256"], f"{where} case_sha256")
@@ -169,8 +172,10 @@ def _relation(
     if kind == "calibration":
         if boundary is not None or prefix is not None:
             raise ValueError(f"{where}: calibration relations carry no boundary or prefix")
-    elif changed is not None or reproduced is not None:
+    elif reproduced is not None or (changed is not None and kind != "role-trajectory"):
         raise ValueError(f"{where}: only calibration relations carry replay outcomes")
+    elif kind == "role-trajectory" and prefix is not None:
+        raise ValueError(f"{where}: role-trajectory relations carry no matched prefix")
     return {
         "check_id": check,
         "report_sha256": raw["report_sha256"],

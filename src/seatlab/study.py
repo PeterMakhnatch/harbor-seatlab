@@ -22,6 +22,7 @@ from .study_contract import (
 )
 from .study_inputs import read_document, snapshot
 from .team_alignment import team_align
+from .trajectory import role_trajectory
 
 __all__ = ["StudyMismatch", "seal_study", "verify_study"]
 
@@ -81,6 +82,16 @@ def _run_check(check: Check, root: Path) -> dict[str, object]:
             _path_in_snapshot(root, alignment["pairs"]),
             input_paths=alignment.get("input_paths"),
         )
+    if check["kind"] == "role-trajectory":
+        trajectory = check
+        return role_trajectory(
+            _path_in_snapshot(root, trajectory["source"]),
+            _path_in_snapshot(root, trajectory["target"]),
+            source_order=_path_in_snapshot(root, trajectory["source_order"]),
+            target_order=_path_in_snapshot(root, trajectory["target_order"]),
+            role=trajectory["role"],
+            fields=trajectory.get("fields"),
+        )
     team = check
     return team_align(
         _path_in_snapshot(root, team["source"]),
@@ -102,6 +113,20 @@ def _check_summary(
             "status": report["status"],
             "matched_steps": report["matched_steps"],
             "boundary_step": report["boundary_step"],
+        }
+    if check["kind"] == "role-trajectory":
+        return {
+            "id": check["id"],
+            "kind": check["kind"],
+            "report_sha256": report_sha256,
+            "role": report["role"],
+            "fields": report["fields"],
+            "status": report["status"],
+            "schedule": report["schedule"],
+            "role_decisions": report["role_decisions"],
+            "raw_view": report["raw_view"],
+            "selected_view": report["selected_view"],
+            "accepted_action": report["accepted_action"],
         }
     summary: dict[str, object] = {
         "id": check["id"],

@@ -52,9 +52,11 @@ Write `recipe.json` beside the inputs. This example registers 2 checks with diff
 
 For [team alignment](world-order.md), use `kind: "team-alignment"` with `id`, `source`, `target`, `source_order` and `target_order`. Both order files are inputs to the study. `input_paths` is optional.
 
+To follow one native role beyond the first changed input, use [`role-trajectory`](trajectory-studies.md). Register the same 4 files, the role name, and optionally the JSON Pointers to observe. The verified report keeps raw inputs, selected inputs and accepted actions separate.
+
 Run `seatlab study seal recipe.json --out study.json`. The output path must be new and beside the recipe. SeatLab reads a private snapshot of the referenced files. It publishes the manifest only after every analysis completes. Record the printed `study_sha256` separately. Distribute `study.json` and all its input files with their relative names intact. The reader does not need `recipe.json` or any executable from the author.
 
-SeatLab 0.9 accepts `calibration`, `alignment` and `team-alignment`. Version 0.8 supports the first 2 kinds. Neither accepts commands, plugins, URLs, parent-directory paths, or symlinks. The publisher selects the evidence and registers the pairing; SeatLab cannot establish that an omitted trial never existed. Different analysis versions may produce different report digests. Give the reader the tested SeatLab version.
+SeatLab 0.12 adds `role-trajectory`. Version 0.9 adds `team-alignment` to the original `calibration` and `alignment` checks. No kind accepts commands, plugins, URLs, parent-directory paths or symlinks. The publisher selects the evidence. SeatLab cannot establish that an omitted trial never existed. Give the reader the tested SeatLab version.
 
 | Exit | Meaning |
 | --- | --- |
