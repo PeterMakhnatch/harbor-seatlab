@@ -40,7 +40,17 @@ class AlignmentCheck(TypedDict):
     input_paths: NotRequired[int]
 
 
-Check: TypeAlias = CalibrationCheck | AlignmentCheck
+class TeamAlignmentCheck(TypedDict):
+    id: str
+    kind: Literal["team-alignment"]
+    source: str
+    target: str
+    source_order: str
+    target_order: str
+    input_paths: NotRequired[int]
+
+
+Check: TypeAlias = CalibrationCheck | AlignmentCheck | TeamAlignmentCheck
 
 
 class FileReceipt(TypedDict):
@@ -62,6 +72,13 @@ _CALIBRATION_REQUIRED = frozenset({"id", "kind", "tape", "predictions", "pairs"}
 _CALIBRATION_ALLOWED = _CALIBRATION_REQUIRED | frozenset({"context"})
 _ALIGNMENT_REQUIRED = frozenset({"id", "kind", "source", "target", "pairs"})
 _ALIGNMENT_ALLOWED = _ALIGNMENT_REQUIRED | frozenset({"input_paths"})
+_TEAM_ALIGNMENT_REQUIRED = frozenset(
+    {"id", "kind", "source", "target", "source_order", "target_order"}
+)
+_TEAM_ALIGNMENT_ALLOWED = _TEAM_ALIGNMENT_REQUIRED | frozenset({"input_paths"})
+_UNSUPPORTED_KIND_ERROR = (
+    "study check kind must be 'calibration', 'alignment', or 'team-alignment'"
+)
 
 __all__ = [
     "AlignmentCheck",
@@ -76,6 +93,7 @@ __all__ = [
     "MIN_INPUT_PATHS",
     "RECIPE_SCHEMA",
     "StudyManifest",
+    "TeamAlignmentCheck",
     "parse_manifest",
     "parse_recipe",
     "referenced_paths",
@@ -94,18 +112,14 @@ def validate_path(value: object) -> str:
     if type(value) is not str:
         raise wire.TapeError("study path must be a string")
     if not value or len(value) > MAX_PATH_LENGTH:
-        raise wire.TapeError(
-            f"study path must be 1 to {MAX_PATH_LENGTH} ASCII characters"
-        )
+        raise wire.TapeError(f"study path must be 1 to {MAX_PATH_LENGTH} ASCII characters")
     if not value.isascii() or "\\" in value:
         raise wire.TapeError("study path must be a relative POSIX ASCII path")
     if value.startswith("/") or value.endswith("/"):
         raise wire.TapeError("study path must not start or end with '/'")
     parts = value.split("/")
     if len(parts) > MAX_PATH_COMPONENTS:
-        raise wire.TapeError(
-            f"study path must have at most {MAX_PATH_COMPONENTS} components"
-        )
+        raise wire.TapeError(f"study path must have at most {MAX_PATH_COMPONENTS} components")
     for part in parts:
         if not part or part in (".", "..") or part.startswith("."):
             raise wire.TapeError(
@@ -122,6 +136,15 @@ def _check_id(value: object) -> str:
     return value
 
 
+def _input_paths(value: object, kind: str, check_id: str) -> int:
+    if type(value) is not int or not MIN_INPUT_PATHS <= value <= MAX_INPUT_PATHS:
+        raise wire.TapeError(
+            f"{kind} check {check_id!r} input_paths must be an integer "
+            f"from {MIN_INPUT_PATHS} to {MAX_INPUT_PATHS}"
+        )
+    return value
+
+
 def _parse_check(value: object) -> Check:
     if type(value) is not dict:
         raise wire.TapeError("study check must be an object")
@@ -133,9 +156,7 @@ def _parse_check(value: object) -> Check:
     kind = fields.get("kind")
     if kind == "calibration":
         if not _CALIBRATION_REQUIRED <= keys <= _CALIBRATION_ALLOWED:
-            raise wire.TapeError(
-                "calibration check must have exactly the documented fields"
-            )
+            raise wire.TapeError("calibration check must have exactly the documented fields")
         check_id = _check_id(fields["id"])
         check: CalibrationCheck = {
             "id": check_id,
@@ -149,9 +170,7 @@ def _parse_check(value: object) -> Check:
         return check
     if kind == "alignment":
         if not _ALIGNMENT_REQUIRED <= keys <= _ALIGNMENT_ALLOWED:
-            raise wire.TapeError(
-                "alignment check must have exactly the documented fields"
-            )
+            raise wire.TapeError("alignment check must have exactly the documented fields")
         check_id = _check_id(fields["id"])
         alignment: AlignmentCheck = {
             "id": check_id,
@@ -161,15 +180,30 @@ def _parse_check(value: object) -> Check:
             "pairs": validate_path(fields["pairs"]),
         }
         if "input_paths" in fields:
-            limit = fields["input_paths"]
-            if type(limit) is not int or not MIN_INPUT_PATHS <= limit <= MAX_INPUT_PATHS:
-                raise wire.TapeError(
-                    f"alignment check {check_id!r} input_paths must be an integer "
-                    f"from {MIN_INPUT_PATHS} to {MAX_INPUT_PATHS}"
-                )
-            alignment["input_paths"] = limit
+            alignment["input_paths"] = _input_paths(
+                fields["input_paths"], "alignment", check_id
+            )
         return alignment
-    raise wire.TapeError("study check kind must be 'calibration' or 'alignment'")
+    if kind == "team-alignment":
+        if not _TEAM_ALIGNMENT_REQUIRED <= keys <= _TEAM_ALIGNMENT_ALLOWED:
+            raise wire.TapeError(
+                "team-alignment check must have exactly the documented fields"
+            )
+        check_id = _check_id(fields["id"])
+        team: TeamAlignmentCheck = {
+            "id": check_id,
+            "kind": "team-alignment",
+            "source": validate_path(fields["source"]),
+            "target": validate_path(fields["target"]),
+            "source_order": validate_path(fields["source_order"]),
+            "target_order": validate_path(fields["target_order"]),
+        }
+        if "input_paths" in fields:
+            team["input_paths"] = _input_paths(
+                fields["input_paths"], "team-alignment", check_id
+            )
+        return team
+    raise wire.TapeError(_UNSUPPORTED_KIND_ERROR)
 
 
 def _parse_checks(value: object) -> list[Check]:
@@ -204,8 +238,13 @@ def referenced_paths(checks: Sequence[Check]) -> list[str]:
             paths.add(validate_path(check["source"]))
             paths.add(validate_path(check["target"]))
             paths.add(validate_path(check["pairs"]))
+        elif check["kind"] == "team-alignment":
+            paths.add(validate_path(check["source"]))
+            paths.add(validate_path(check["target"]))
+            paths.add(validate_path(check["source_order"]))
+            paths.add(validate_path(check["target_order"]))
         else:
-            raise wire.TapeError("study check kind must be 'calibration' or 'alignment'")
+            raise wire.TapeError(_UNSUPPORTED_KIND_ERROR)
     return sorted(paths)
 
 

@@ -21,6 +21,7 @@ from .study_contract import (
     valid_sha256,
 )
 from .study_inputs import read_document, snapshot
+from .team_alignment import team_align
 
 __all__ = ["StudyMismatch", "seal_study", "verify_study"]
 
@@ -72,18 +73,36 @@ def _run_check(check: Check, root: Path) -> dict[str, object]:
             _path_in_snapshot(root, calibration["pairs"]),
             context=context,
         )
-    alignment = check
-    return align(
-        _path_in_snapshot(root, alignment["source"]),
-        _path_in_snapshot(root, alignment["target"]),
-        _path_in_snapshot(root, alignment["pairs"]),
-        input_paths=alignment.get("input_paths"),
+    if check["kind"] == "alignment":
+        alignment = check
+        return align(
+            _path_in_snapshot(root, alignment["source"]),
+            _path_in_snapshot(root, alignment["target"]),
+            _path_in_snapshot(root, alignment["pairs"]),
+            input_paths=alignment.get("input_paths"),
+        )
+    team = check
+    return team_align(
+        _path_in_snapshot(root, team["source"]),
+        _path_in_snapshot(root, team["target"]),
+        source_order=_path_in_snapshot(root, team["source_order"]),
+        target_order=_path_in_snapshot(root, team["target_order"]),
+        input_paths=team.get("input_paths"),
     )
 
 
 def _check_summary(
     check: Check, report: Mapping[str, object], report_sha256: str
 ) -> dict[str, object]:
+    if check["kind"] == "team-alignment":
+        return {
+            "id": check["id"],
+            "kind": check["kind"],
+            "report_sha256": report_sha256,
+            "status": report["status"],
+            "matched_steps": report["matched_steps"],
+            "boundary_step": report["boundary_step"],
+        }
     summary: dict[str, object] = {
         "id": check["id"],
         "kind": check["kind"],
@@ -103,10 +122,7 @@ def _compare_file_receipts(
     for rel_path in sorted(recorded):
         expected = recorded[rel_path]
         observed = actual[rel_path]
-        if (
-            expected["bytes"] != observed["bytes"]
-            or expected["sha256"] != observed["sha256"]
-        ):
+        if expected["bytes"] != observed["bytes"] or expected["sha256"] != observed["sha256"]:
             raise StudyMismatch(
                 f"file {rel_path!r} does not match manifest "
                 f"(expected {expected['bytes']} bytes / {expected['sha256']}, "

@@ -21,6 +21,7 @@ from .report import compare, describe
 from .study import StudyMismatch, seal_study, verify_study
 from .sufficiency import audit_context
 from .tape import digest
+from .team_alignment import team_align
 from .viewwork import act
 
 
@@ -51,7 +52,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     study_commands = study.add_subparsers(dest="study_action", required=True)
     seal = study_commands.add_parser("seal", help="record file and analysis digests")
     seal.add_argument("recipe", type=Path)
-    seal.add_argument("--out", type=Path, required=True, help="new manifest beside the recipe")
+    seal.add_argument(
+        "--out", type=Path, required=True, help="new manifest beside the recipe"
+    )
     verify = study_commands.add_parser("verify", help="recompute the registered analyses")
     verify.add_argument("manifest", type=Path)
     verify.add_argument("--expect-sha256", help="trusted canonical manifest digest")
@@ -119,6 +122,18 @@ def main(argv: Sequence[str] | None = None) -> int:
         metavar="N",
         type=int,
         help="list at most N changed JSON Pointer paths at the first input boundary (1–128)",
+    )
+    joint = commands.add_parser(
+        "team-align", help="find the first different decision step across two native teams"
+    )
+    joint.add_argument("source", type=Path, help="role episodes from one native trial")
+    joint.add_argument(
+        "target", type=Path, help="role episodes from a different native trial"
+    )
+    joint.add_argument("--source-order", type=Path, required=True)
+    joint.add_argument("--target-order", type=Path, required=True)
+    joint.add_argument(
+        "--input-paths", metavar="N", type=int, help="show up to N changed paths"
     )
     audit = commands.add_parser(
         "context-audit",
@@ -200,6 +215,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             result = compare(args.baseline, args.candidate)
         elif args.command == "align":
             result = align(args.source, args.target, args.pairs, input_paths=args.input_paths)
+        elif args.command == "team-align":
+            result = team_align(
+                args.source,
+                args.target,
+                source_order=args.source_order,
+                target_order=args.target_order,
+                input_paths=args.input_paths,
+            )
         elif args.command == "context-audit":
             result = audit_context(
                 args.train,

@@ -1,0 +1,55 @@
+name: Replicate a frozen Hanabi deck on stock Harbor
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/native-hanabi.yml'
+permissions:
+  contents: read
+jobs:
+  crossplay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          repository: olamlabs/harbor-multiagent
+          ref: 6aeb609e31fd77e5f89ce3bcb018db8045520fb7
+          path: stock-olam
+          persist-credentials: false
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          repository: PeterMakhnatch/harbor-multiagent
+          ref: 48cbcf76e3a49b3bcb1a6b9b6e2b71762a038cec
+          path: game-source
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: '0.13.9'
+      - name: Install stock Harbor and separate analysis tools
+        run: |
+          uv sync --project stock-olam --locked --no-dev --python 3.12
+          uv venv --python 3.12 "$RUNNER_TEMP/analyst"
+          uv pip install --python "$RUNNER_TEMP/analyst/bin/python" . 'PyYAML==6.0.3'
+      - name: Run each registered team in its own native world
+        run: |
+          d="$PWD/game-source/adapters/hanabi-crossplay"
+          root="$RUNNER_TEMP/deck-zero"
+          py="$RUNNER_TEMP/analyst/bin/python"
+          curl -fsSL https://github.com/PeterMakhnatch/harbor-seatlab/releases/download/v0.8.0/hanabi-predictions-64.json -o "$RUNNER_TEMP/forecasts.json"
+          echo '9302b9818793a5dbd8efaf5e300684395ec13d7495d84ab4e33c93f8432f91f9  forecasts.json' | (cd "$RUNNER_TEMP" && sha256sum -c -)
+          "$py" "$d/study.py" prepare "$root" --decks 1
+          "$py" "$d/run_deck.py" "$root" 0 --harbor "$PWD/stock-olam/.venv/bin/harbor"
+          mkdir "$RUNNER_TEMP/public-result"
+          "$py" "$d/collect.py" "$root" "$RUNNER_TEMP/forecasts.json" --episodes "$RUNNER_TEMP/public-result/episodes" > "$RUNNER_TEMP/public-result/report.json"
+          jq -e '.counts.registered == 4 and .counts.matched == 4 and .counts.duplicate_uuids == 0 and .episodes.episode_count == 8' "$RUNNER_TEMP/public-result/report.json"
+      - name: Retain only the projected receipts and native result summary
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: independent-hanabi-deck-zero
+          path: ${{ runner.temp }}/public-result/
+          if-no-files-found: error
+          retention-days: 7
