@@ -1,8 +1,41 @@
 # Distribute a replay without a shared scheduler
 
-Use this workflow for **independent decisions**, not consecutive turns in an episode. It requires no Docker daemon, queue, shared database, network service or model key. A coordinator registers the input and the policy before distribution. Workers run the normal `replay` command. The coordinator verifies returned rows against the original tape. Nothing launches workers or executes a policy during merge.
+Use this workflow for **independent decisions**, not consecutive turns in an episode. It requires no Docker daemon, queue, shared database, network service or model key. The coordinator registers the input, policy and context before distributing work. There are 2 delivery modes. A **view-only worker** gets actor inputs and returns unscored actions. A **trusted worker** gets a decision tape and returns scored results. Neither mode launches workers. The coordinator never executes an external policy during merge.
 
-## Try 2 workers on actual native decisions
+## Give workers actor views, not answers
+
+Use this mode for an outside contributor who supplies a policy. The coordinator keeps the answer table, recorded native actions and source IDs. This example sends 2 workers the transformed views from 4 native scheduling cases.
+
+```sh
+out=$(mktemp -d)
+tape=examples/meeting-sources.jsonl
+namespace=$(python3 -c 'import secrets; print(secrets.token_hex(16))')
+seatlab partition "$tape" --policy intersection --shards 2 --views-only "$namespace" \
+  --transform-file examples/meeting-first8.json --out "$out/private"
+for n in 1 2; do
+  mkdir "$out/worker-$n"
+  cp "$out/private/part-000$n.jsonl" "$out/worker-$n/requests.jsonl"
+done
+
+# Each worker needs SeatLab, its own requests, and its policy. Nothing else.
+(cd "$out/worker-1" && seatlab act requests.jsonl --policy intersection --out actions.jsonl) &
+a=$!
+(cd "$out/worker-2" && seatlab act requests.jsonl --policy intersection --out actions.jsonl) &
+b=$!
+wait "$a" && wait "$b"
+
+# Only the coordinator runs this step, after both workers return their actions.
+seatlab merge --plan "$out/private/plan.json" --tape "$tape" --out "$out/merged.jsonl" \
+  "$out/worker-2/actions.jsonl" "$out/worker-1/actions.jsonl"
+```
+
+Send **only** the worker's `requests.jsonl`, not the plan directory. The request has `schema`, an opaque `request_id`, and `view`. The identifier depends on the study namespace, policy family, transform, source ordinal and transformed view. It does not encode private scoring fields. Start a new registration with a new namespace. Keep the plan digest outside the worker's directory. To use a separate machine, transfer the same files with your normal transport.
+
+For a custom executable, register `--policy external`. Run `seatlab act requests.jsonl --out actions.jsonl --exec /absolute/path/to/policy` on each worker. The program receives only the current view on stdin. The coordinator checks the view digest and scores returned actions locally. An allowed, deliberate null remains measurable. A returned action outside the case's action domain is unmeasured. A missing action record prevents publication. The `observed` replay policy is unavailable in this mode because it needs native actions.
+
+This separation protects only the omitted fields. The task author must still inspect each actor view for sensitive or identifying data. Workers may infer an answer or reuse information they already have. A digest does not prove which executable ran. An empty working directory is not a process sandbox. Do not run an outside contributor's executable on the coordinator.
+
+## Give trusted workers scored decision tapes
 
 Install SeatLab and run these commands from the source checkout. All outputs must be new.
 

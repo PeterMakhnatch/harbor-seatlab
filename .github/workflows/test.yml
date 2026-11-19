@@ -65,3 +65,23 @@ jobs:
         run: |
           seatlab context-audit examples/cursor-source.jsonl --field /round |
             jq -e '.fit.counts.eligible == 29 and .fit.additional_minimum_errors == 4 and .fit.full.minimum_errors == 0'
+      - name: Reconcile actions from workers without the source tape
+        run: |
+          out=$(mktemp -d)
+          tape=examples/meeting-sources.jsonl
+          seatlab partition "$tape" --policy intersection --shards 2 \
+            --views-only "$(python -c 'import secrets; print(secrets.token_hex(16))')" \
+            --transform-file examples/meeting-first8.json --out "$out/owner"
+          for n in 1 2; do
+            mkdir "$out/worker-$n"
+            cp "$out/owner/part-000$n.jsonl" "$out/worker-$n/request.jsonl"
+            jq -es 'all(.[]; keys == ["request_id","schema","view"])' "$out/worker-$n/request.jsonl"
+            (cd "$out/worker-$n" && seatlab act request.jsonl --policy intersection --out actions.jsonl) &
+            pids[$n]=$!
+          done
+          wait "${pids[1]}" && wait "${pids[2]}"
+          seatlab merge --plan "$out/owner/plan.json" --tape "$tape" --out "$out/merged.jsonl" \
+            "$out/worker-2/actions.jsonl" "$out/worker-1/actions.jsonl"
+          seatlab replay "$tape" --policy intersection --transform-file examples/meeting-first8.json \
+            --out "$out/serial.jsonl"
+          cmp "$out/merged.jsonl" "$out/serial.jsonl"
