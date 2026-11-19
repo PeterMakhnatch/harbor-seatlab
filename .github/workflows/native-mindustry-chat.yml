@@ -48,6 +48,8 @@ jobs:
           version: '0.13.9'
       - name: Install stock Harbor
         run: uv sync --project stock-olam --locked --no-dev --python 3.12
+      - name: Check native observer receipts against the installed Harbor
+        run: stock-olam/.venv/bin/python -I -m unittest discover -s examples/mindustry-chat -p 'test_observer.py'
       - name: Run read and no-read once each, no retries
         timeout-minutes: 40
         run: |

@@ -17,6 +17,8 @@ jobs:
           python-version: ${{ matrix.python }}
       - run: python -m pip install . pytest
       - run: python -m pytest -q
+      - name: Separate missing worlds from negative communication evidence
+        run: python -m pytest -q examples/mindustry-chat/test_evidence.py examples/mindustry-chat/test_compare_revisions.py
       - name: Compare two policies on real public observations
         run: |
           out=$(mktemp -d)
