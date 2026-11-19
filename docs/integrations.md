@@ -24,6 +24,8 @@ scratch=$(mktemp -d)
 
 The [retained integration control](https://github.com/PeterMakhnatch/harbor-multiagent/blob/9466ab669a364b26eb47d5d342da1271bbe95aa7/examples/seatlab/baselines.md) has 1 native job, 1 trial and 2 seats. Eval Lab returns 1 shared reward. Neither seat supplies an input token count. The correct aggregate is **0 known values**, not 0 tokens or 2 independent trials. The query uses an in-memory census and a fresh scratch directory. It does not write to a shared catalog.
 
+**Standalone trial control:** In [13 native team trials](https://github.com/PeterMakhnatch/harbor-multiagent/blob/e17621248a1dd54d56565ed35e043b2b960af0d4/examples/seatlab/native-model-results.md#can-stock-eval-lab-read-these-trials), stock `load_trial` returns 13 UUIDs, 26 seat records and 12 known shared scores. The read-only census finds all 13 paths and UUIDs, but projects no rewards because standalone trials lack a native job UUID. The optional bridge keeps missing jobs, trial scores and seat usage separate. It does not invent jobs to complete a join.
+
 ## Independent work for contributors
 
 | What you own | Interface | Evidence to return |
