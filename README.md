@@ -6,6 +6,8 @@
 
 **[Reproduce a real policy regression with one download](docs/measured-recheck.md).** All 10 Harbor trials complete after one listener rule changes. SeatLab flags 8 of 18 registered behavior checks. Independently repeating unchanged code on Linux flags none. Try the [interactive field report](https://petermakhnatch.github.io/harbor-seatlab/panel-recheck.html) or [use the offline CI gate](actions/panel-recheck/action.yml).
 
+**[Build a regression panel for your own Harbor task](docs/from-matrix.md).** Give SeatLab one native recording per case and team. It selects the smallest observed case set that covers your criteria. A fresh run can then show which decisions changed, stayed the same, or lack evidence.
+
 ## Try it on real decisions
 
 Use Python 3.11 or later. The example contains observations and choices from 6 native Harbor trials, not hand-written answers.

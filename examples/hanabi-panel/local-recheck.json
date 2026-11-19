@@ -1,0 +1,76 @@
+{
+  "candidate_design_sha256": "783d2ed169d7ac3fb5d9d1485d8042e27be42e770492f70c572223c6a4fceb87",
+  "candidate_study_sha256": "93545a43acf0eac0d4b43f980bec3241ee626e2ac81b60aa35d1eb0e3174235d",
+  "cases": [
+    {
+      "candidate_native_trial_ids": [
+        "15a55fee-ecbf-4946-9389-bea51a036fbd",
+        "84670d85-f634-408c-b756-3e582aa2a4bf",
+        "8bf2ba74-f176-42b5-bd46-2da4ae956408",
+        "e3687224-f0fd-4bea-b54a-fe416b6b8743"
+      ],
+      "criteria": {
+        "ll-lr-p0-action-differs": {
+          "candidate": "witness",
+          "source": "witness",
+          "status": "stable"
+        },
+        "ll-lr-p0-view-differs": {
+          "candidate": "witness",
+          "source": "witness",
+          "status": "stable"
+        },
+        "ll-rl-p1-action-differs": {
+          "candidate": "witness",
+          "source": "witness",
+          "status": "stable"
+        },
+        "ll-rl-p1-view-differs": {
+          "candidate": "witness",
+          "source": "witness",
+          "status": "stable"
+        },
+        "rr-lr-p1-action-differs": {
+          "candidate": "witness",
+          "source": "witness",
+          "status": "stable"
+        },
+        "rr-lr-p1-view-differs": {
+          "candidate": "witness",
+          "source": "witness",
+          "status": "stable"
+        },
+        "rr-rl-p0-action-differs": {
+          "candidate": "witness",
+          "source": "witness",
+          "status": "stable"
+        },
+        "rr-rl-p0-view-differs": {
+          "candidate": "witness",
+          "source": "witness",
+          "status": "stable"
+        }
+      },
+      "id": "d00",
+      "source_native_trial_ids": [
+        "0a5e8d6e-d138-48af-be26-ca2e71e13071",
+        "321d44c2-3a25-4bc3-aae8-82dedd127ea3",
+        "7eef9640-1065-4459-bc92-ee30a541f8e6",
+        "b3c6aeed-fe7e-4462-ab48-fb685c39f725"
+      ]
+    }
+  ],
+  "counts": {
+    "changed": 0,
+    "entries": 8,
+    "stable": 8,
+    "unknown": 0
+  },
+  "schema": "seatlab.panel-recheck/v1",
+  "selection": [
+    "d00"
+  ],
+  "source_design_sha256": "6e46a22efecdea98366db2ddc132123bdb18b7e95dd06646e2d4f82a4934950a",
+  "source_study_sha256": "9b93b09d4d5d53ebe6c3aa185ff217f8a309cad628ddd0ea71570cea3648e51b",
+  "status": "matched"
+}
