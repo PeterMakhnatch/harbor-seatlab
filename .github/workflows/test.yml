@@ -85,3 +85,15 @@ jobs:
           seatlab replay "$tape" --policy intersection --transform-file examples/meeting-first8.json \
             --out "$out/serial.jsonl"
           cmp "$out/merged.jsonl" "$out/serial.jsonl"
+      - name: Seal and independently reproduce a portable native study
+        run: |
+          out=$(mktemp -d)
+          cp examples/{meeting.jsonl,meeting-pairs.json,meeting-first8.json,meeting-study.recipe.json,cursor-source.jsonl,cursor-target.jsonl,cursor-pairs.json} "$out"
+          seatlab replay examples/meeting-sources.jsonl --policy intersection \
+            --transform-file "$out/meeting-first8.json" --out "$out/projected.jsonl"
+          seatlab replay examples/meeting-sources.jsonl --policy intersection --out "$out/identity.jsonl"
+          pin=$(seatlab study seal "$out/meeting-study.recipe.json" --out "$out/study.json" | jq -er .study_sha256)
+          seatlab study verify "$out/study.json" --expect-sha256 "$pin" |
+            jq -e '.status == "verified" and (.checks | length == 3) and
+              .checks[0].counts.reproduced == 4 and .checks[1].counts.reproduced == 0 and
+              .checks[2].counts.pairs == 2'
