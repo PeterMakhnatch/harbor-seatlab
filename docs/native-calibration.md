@@ -33,4 +33,6 @@ seatlab calibrate examples/meeting.jsonl "$out/truncated.jsonl" --pairs examples
 
 For case `calendar:2-1`, the source coordinator chooses time `245`. The separate target coordinator submits `null`. The recipe predicts `null`, while the unchanged replay predicts `245`. All 4 target nulls are real decisions. Withholding the recipe leaves 4 opaque predictions; it does not make them wrong. Inspect `pairs` for the role, source and target receipts, actual choices, and mismatch reasons.
 
+Add `--html "$out/report.html"` to any `calibrate` command to write a local inspector. Open that file in a browser. Filter by status or case ID, then expand a case to see the 3 actions and the native receipts. The HTML works without a network connection. The JSON report still goes to stdout. An existing HTML file is never replaced.
+
 The [native exporter](https://github.com/PeterMakhnatch/harbor-multiagent/tree/experiments/seatlab-masbench-calendars/adapters/masbench-scheduling) produces the pair manifest and both tapes from registered trial directories. Use `--all-cases` and the pinned dataset to retain missing scheduled cases. Do not use a complete local simulation to fill an absent native record.
