@@ -69,17 +69,34 @@ _TEAM = frozenset(
     }
 )
 _CSS = (
-    ":root{color-scheme:light dark}"
-    "body{margin:0;background:#fff;color:#161616;font:1rem/1.5 system-ui,sans-serif}"
-    "main{max-width:64rem;margin:auto;padding:1rem}h1{font-size:1.6rem;line-height:1.2}"
-    ":focus-visible{outline:3px solid currentColor;outline-offset:3px}"
-    "dl{display:grid;gap:.75rem 1.25rem;margin:.75rem 0;"
-    "grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr))}"
-    "dt{font-weight:700}dd,summary,code{margin:0;overflow-wrap:anywhere}"
-    "details{border:2px solid currentColor;margin:.75rem 0}"
-    "summary{cursor:pointer;padding:.75rem}.body{padding:0 .75rem .75rem}"
-    ".badge{border:2px solid currentColor;padding:0 .35rem}"
-    "@media (prefers-color-scheme:dark){body{background:#101010;color:#f4f4f4}}"
+    ":root{color-scheme:light dark;--bg:#f6f5f2;--card:#fff;--ink:#1c1917;"
+    "--line:#c8c4be;--focus:#1d4ed8}"
+    "body{margin:0;background:var(--bg);color:var(--ink);font:1rem/1.5 system-ui,sans-serif}"
+    "main{max-width:68rem;margin:auto;padding:1.25rem}"
+    "h1{margin:0 0 .35rem;font-size:1.7rem;line-height:1.15}"
+    "h2{margin:1.35rem 0 .35rem;font-size:1.15rem}p{max-width:44rem}"
+    ".mast{padding-bottom:1rem;margin-bottom:.25rem;border-bottom:1px solid var(--line)}"
+    ":focus-visible{outline:3px solid var(--focus);outline-offset:3px}"
+    "dl{display:grid;gap:.4rem 1.25rem;margin:.3rem 0 0;"
+    "grid-template-columns:repeat(auto-fit,minmax(min(100%,15rem),1fr))}"
+    "dt{font-size:.8rem;font-weight:650}dd,code{margin:0;overflow-wrap:anywhere}"
+    "dd{font-variant-numeric:tabular-nums}"
+    "details{background:var(--card);border:1px solid var(--line);border-radius:.5rem;"
+    "margin:.5rem 0}"
+    "summary{cursor:pointer;padding:.65rem .9rem}"
+    ".row{display:grid;gap:.3rem .9rem;align-items:baseline;"
+    "grid-template-columns:minmax(7rem,1.2fr) auto minmax(14rem,2fr)}"
+    ".id,.result{font-weight:700}.id{overflow-wrap:anywhere}"
+    ".kind{border:1px solid var(--line);border-radius:999px;padding:.05rem .5rem;"
+    "font-size:.8rem;font-weight:650;white-space:nowrap}"
+    ".result{font-variant-numeric:tabular-nums}"
+    ".num{display:inline-block;min-width:4ch;text-align:right}"
+    ".body{padding:0 .9rem .75rem}"
+    "@media (max-width:42rem){.row{grid-template-columns:1fr}.kind{justify-self:start}}"
+    "@media (prefers-color-scheme:dark){:root{--bg:#121211;--card:#1c1b19;"
+    "--ink:#f5f5f4;--line:#57534e;--focus:#93c5fd}}"
+    "@media (forced-colors:active){details,.kind{border-color:CanvasText}"
+    ":focus-visible{outline-color:Highlight}}"
 )
 
 
@@ -132,6 +149,14 @@ def _cell(term: str, detail: str) -> str:
 def _words(token: str) -> str:
     text = token.replace("_", " ").replace("-", " ")
     return escape(text[:1].upper() + text[1:], quote=True)
+
+
+def _pair_scan(count: int, total: int, tail: str) -> str:
+    if count > total:
+        raise ValueError("count exceeds its denominator")
+    if total == 0:
+        return "No registered pairs"
+    return f'<span class="num">{count}</span> of <span class="num">{total}</span> {tail}'
 
 
 def _code(value: str) -> str:
@@ -213,7 +238,7 @@ def _alignment(counts: dict[str, int]) -> str:
     return f"<dl>{rows}{_cell('Matched prefix turns', turns)}</dl>"
 
 
-def _team(item: dict[str, object]) -> str:
+def _team(item: dict[str, object]) -> tuple[str, str]:
     if "status" not in item or "matched_steps" not in item or "boundary_step" not in item:
         raise ValueError("team-alignment check is missing a required field")
     status, matched, boundary = item["status"], item["matched_steps"], item["boundary_step"]
@@ -227,9 +252,15 @@ def _team(item: dict[str, object]) -> str:
         step = str(boundary)
     else:
         raise ValueError("boundary_step must be a positive integer or null")
+    if status == "matched_open":
+        scan = f'<span class="num">{matched}</span> matching steps, open prefix'
+    elif boundary is None:
+        scan = f'<span class="num">{matched}</span> matching steps'
+    else:
+        scan = f'Step <span class="num">{boundary}</span>: {_words(str(status))}'
     prefix = f"{matched}. No step total is in this summary, so this is not a rate."
     rows = _cell("Status", _words(str(status))) + _cell("Matched prefix steps", prefix)
-    return f"<dl>{rows}{_cell('Boundary step', step)}</dl>"
+    return f"<dl>{rows}{_cell('Boundary step', step)}</dl>", scan
 
 
 def _check(item: object, seen: set[str]) -> str:
@@ -243,7 +274,7 @@ def _check(item: object, seen: set[str]) -> str:
         raise ValueError("check kind is not supported")
     digest = _sha(check.get("report_sha256"), "report digest")
     if kind == "team-alignment":
-        body = _team(check)
+        body, scan = _team(check)
     else:
         keys = _CAL if kind == "calibration" else ("pairs", "matched_prefix", *_ALIGN)
         counts = _nums(check.get("counts"), keys, "counts")
@@ -254,14 +285,18 @@ def _check(item: object, seen: set[str]) -> str:
                 else None
             )
             body = _calibration(counts, external)
+            scan = _pair_scan(counts["reproduced"], counts["pairs"], "decisions reproduced")
         else:
             body = _alignment(counts)
+            scan = _pair_scan(counts["matched"], counts["pairs"], "histories matched")
     safe_id = escape(check_id, quote=True)
     identity = _cell("Check ID", safe_id) + _cell("Report SHA-256", _code(digest))
+    kind_label = _words(str(kind))
     return (
-        f'<details id="check-{safe_id}">\n<summary><strong>{safe_id}</strong> '
-        f'<span class="badge">{_words(str(kind))}</span> '
-        f"Report SHA-256 {_code(digest)}</summary>\n"
+        f'<details id="check-{safe_id}">\n<summary>'
+        f'<span class="row"><span class="id">{safe_id}</span>'
+        f'<span class="kind">{kind_label}</span>'
+        f'<span class="result">{scan}</span></span></summary>\n'
         f'<div class="body"><dl>{identity}</dl>{body}</div></details>'
     )
 
@@ -293,10 +328,11 @@ def _render(document: dict[str, object]) -> str:
         f'<meta http-equiv="Content-Security-Policy" content="{policy}">\n'
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
         "<title>Verified study</title>\n"
-        f"<style>{_CSS}</style>\n</head>\n<body>\n<main>\n<h1>Verified study</h1>\n"
+        f"<style>{_CSS}</style>\n</head>\n<body>\n<main>\n"
+        '<header class="mast">\n<h1>Verified study</h1>\n'
         "<p>Status: verified. Verified means these analyses reproduce. "
         "It does not mean a policy succeeded.</p>\n"
-        f'<dl>{header}</dl>\n<section aria-labelledby="checks-heading">\n'
+        f'<dl>{header}</dl>\n</header>\n<section aria-labelledby="checks-heading">\n'
         '<h2 id="checks-heading">Checks</h2>\n'
         "<p>Each check keeps its own denominators. "
         "This page does not add counts across checks.</p>\n"

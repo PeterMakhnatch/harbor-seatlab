@@ -146,10 +146,10 @@ class StudyHtmlCliTests(unittest.TestCase):
     def _seal_contrast_study(self) -> tuple[Path, dict[str, object]]:
         bundle = self.root / "bundle"
         bundle.mkdir()
-        measured_view = {"reports": {"left": [1, 2], "right": [1, 2]}}
+        measured_view: dict[str, object] = {"reports": {"left": [1, 2], "right": [1, 2]}}
         measured_source = _decision("measured-case", "source", 2, measured_view, _ANSWERS)
         measured_target = _decision("measured-case", "target", 1, measured_view, _ANSWERS)
-        secret_view = {
+        secret_view: dict[str, object] = {
             "reports": {"left": [1], "right": [1]},
             "environmental_secret": _VIEW_SECRET,
         }
