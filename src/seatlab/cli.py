@@ -12,7 +12,7 @@ from .alignment import align
 from .calibration import calibrate
 from .context import ContextSpec
 from .handoff import from_handoff
-from .prefix import prefix
+from .inspector import write_inspector
 from .replay import replay
 from .report import compare, describe
 
@@ -86,6 +86,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         type=Path,
         help="recipe to independently check predicted actor inputs",
     )
+    calibration.add_argument("--html", type=Path, help="also write a new, self-contained HTML report")
     args = parser.parse_args(argv)
     try:
         if args.command == "from-handoff":
@@ -99,6 +100,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         elif args.command == "calibrate":
             context = ContextSpec.load(args.transform_file) if args.transform_file else None
             result = calibrate(args.tape, args.predictions, args.pairs, context=context)
+            if args.html is not None:
+                write_inspector(result, args.html)
         else:
             if args.executable is not None and not args.executable:
                 parser.error("--exec requires an absolute executable and optional arguments")
