@@ -10,7 +10,7 @@ from uuid import UUID
 from . import tape as wire
 from .episodes import Episode, read_episodes
 
-__all__ = ["WORLD_ORDER_SCHEMA", "WorldOrder", "read_world_order"]
+__all__ = ["WORLD_ORDER_SCHEMA", "WorldOrder", "read_world_order", "validate_world_pair"]
 
 WORLD_ORDER_SCHEMA = "seatlab.world-order/v1"
 _ORDER_FIELDS = frozenset({"schema", "case_sha256", "native_trial_id", "episodes", "steps"})
@@ -29,6 +29,16 @@ class WorldOrder:
     def closed(self) -> bool:
         """Return whether every participating role episode in this trial is closed."""
         return all(episode["closed"] for episode in self.episodes.values())
+
+
+def validate_world_pair(source: WorldOrder, target: WorldOrder) -> None:
+    """Require independent trials with the same registered case and roles."""
+    if source.case_sha256 != target.case_sha256:
+        raise wire.TapeError("source and target world orders have different case_sha256")
+    if source.native_trial_id == target.native_trial_id:
+        raise wire.TapeError("source and target cannot share the same native_trial_id")
+    if source.episodes.keys() != target.episodes.keys():
+        raise wire.TapeError("source and target world orders must cover the same role set")
 
 
 def _canonical_uuid(value: object, field: str) -> str:

@@ -10,7 +10,7 @@ from . import tape as wire
 from .episodes import EpisodeFrame
 from .verification import action_equal
 from .viewdiff import InputDiff, diff_input
-from .world_order import WorldOrder, read_world_order
+from .world_order import WorldOrder, read_world_order, validate_world_pair
 
 __all__ = ["TEAM_ALIGNMENT_SCHEMA", "team_align"]
 
@@ -51,13 +51,6 @@ class TeamAlignmentReport(TypedDict):
     roles: list[RoleEvidence]
 
 
-def _validate_pair(source: WorldOrder, target: WorldOrder) -> None:
-    if source.case_sha256 != target.case_sha256:
-        raise wire.TapeError("source and target world orders have different case_sha256")
-    if source.native_trial_id == target.native_trial_id:
-        raise wire.TapeError("source and target cannot share the same native_trial_id")
-    if source.episodes.keys() != target.episodes.keys():
-        raise wire.TapeError("source and target world orders must cover the same role set")
 
 
 def _compare_role(
@@ -139,7 +132,7 @@ def team_align(
 
     left_world = read_world_order(source, source_order)
     right_world = read_world_order(target, target_order)
-    _validate_pair(left_world, right_world)
+    validate_world_pair(left_world, right_world)
 
     left_total = len(left_world.steps)
     right_total = len(right_world.steps)

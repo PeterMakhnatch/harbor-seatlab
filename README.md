@@ -57,6 +57,8 @@ In case `2/1`, both native coordinators receive the same input at decision 9. On
 
 If the world records which roles act together, use [team alignment](docs/world-order.md). It finds the first changed decision step across the whole team. A kitchen can accept 2 moves at once. A card game can accept 1 move at a time. Sorting actor logs by time is not a substitute for either rule.
 
+To compare a role after the team's first change, use [role trajectories](docs/role-trajectory.md). The command counts changed inputs, selected observation fields, and accepted actions separately. It pairs only matching native schedules. On 3 speaker–listener seeds, a shared symbol rotation changed the messages but none of the listener's 60 moves.
+
 ## Bring a policy
 
 Use `--exec` only with an executable **you trust**. SeatLab is not a sandbox. The process has your operating-system permissions. The harness passes only the canonical role view on standard input. It does not pass the observed action, reference answers, run identity, CLI environment credentials, or source path as policy input. Executables do not run implicitly.

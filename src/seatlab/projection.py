@@ -129,8 +129,7 @@ class Projection:
         object.__setattr__(self, "fields", ordered)
         object.__setattr__(self, "_steps", tuple(compiled[pointer] for pointer in ordered))
 
-    def encode(self, view: dict[str, object]) -> bytes:
-        """Return canonical JSON bytes for the projected view without mutating it."""
+    def _encode(self, view: dict[str, object], *, require_all: bool) -> bytes | None:
         if not isinstance(view, dict):
             raise ValueError("projection view must be a JSON object")
         if self.fields is None:
@@ -141,7 +140,17 @@ class Projection:
         for steps in self._steps:
             value = _resolve(view, steps)
             if value is _MISSING:
+                if require_all:
+                    return None
                 projected.append([False])
             else:
                 projected.append([True, value])
         return wire.canonical(projected)
+
+    def encode(self, view: dict[str, object]) -> bytes:
+        """Encode the projection, preserving absent fields as distinct from null."""
+        return cast(bytes, self._encode(view, require_all=False))
+
+    def encode_present(self, view: dict[str, object]) -> bytes | None:
+        """Encode the projection, or return None if any selected field is absent."""
+        return self._encode(view, require_all=True)
