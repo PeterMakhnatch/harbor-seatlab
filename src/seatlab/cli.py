@@ -19,6 +19,7 @@ from .prefix import prefix
 from .replay import replay
 from .report import compare, describe
 from .study import StudyMismatch, seal_study, verify_study
+from .study_html import write_study_html
 from .sufficiency import audit_context
 from .tape import digest
 from .team_alignment import team_align
@@ -58,6 +59,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     verify = study_commands.add_parser("verify", help="recompute the registered analyses")
     verify.add_argument("manifest", type=Path)
     verify.add_argument("--expect-sha256", help="trusted canonical manifest digest")
+    verify.add_argument(
+        "--html", type=Path, help="also write a new, self-contained HTML report"
+    )
     ingest = commands.add_parser(
         "from-handoff", help="import a public native Dispatch Handoff study"
     )
@@ -193,6 +197,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 }
             else:
                 result = verify_study(args.manifest, expect_sha256=args.expect_sha256)
+                if args.html is not None:
+                    write_study_html(result, args.html)
         elif args.command == "from-handoff":
             result = from_handoff(args.bundle, args.panel, args.out)
         elif args.command == "describe":

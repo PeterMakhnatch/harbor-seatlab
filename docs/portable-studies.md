@@ -14,6 +14,8 @@ The digest covers the canonical JSON manifest, not its indentation or final newl
 
 A verified study can contain missing native trials, a negative control with no matching inputs, or logged external actions with no proof of execution. `status: verified` means the published analysis reproduces, not that the policy succeeds. With no trusted digest, verification establishes internal consistency only. It does not authenticate a publisher, a native trial, or a worker. Undeclared files are not verified.
 
+To share a readable offline summary, add `--html study.html` to `study verify`. SeatLab writes a new HTML file only after verification succeeds. It uses the verified counts and boundary steps, not raw participant observations. The report has no scripts or external resources. Open each check to see its denominator and report digest.
+
 ### Try the published study
 
 This example uses actual native observations from MASBench Scheduling, Overcooked-AI and the receipt board. Verification needs Python 3.11 or later. It does not need a model key or Docker.
@@ -21,12 +23,13 @@ This example uses actual native observations from MASBench Scheduling, Overcooke
 ```sh
 work=$(mktemp -d)
 python3 -m venv "$work/venv"
-base=https://github.com/PeterMakhnatch/harbor-seatlab/releases/download/v0.8.0
-"$work/venv/bin/python" -m pip install --no-deps "$base/harbor_seatlab-0.8.0-py3-none-any.whl"
-curl -fsSL "$base/portable-native-studies.tar.gz" -o "$work/studies.tar.gz"
+base=https://github.com/PeterMakhnatch/harbor-seatlab/releases/download
+"$work/venv/bin/python" -m pip install --no-deps "$base/v0.10.0/harbor_seatlab-0.10.0-py3-none-any.whl"
+curl -fsSL "$base/v0.8.0/portable-native-studies.tar.gz" -o "$work/studies.tar.gz"
 tar -xzf "$work/studies.tar.gz" -C "$work"
 "$work/venv/bin/seatlab" study verify "$work/study.json" \
-  --expect-sha256 5c05f220396f3d74fba87c2610349ec9d17a445b01cf295c32dd0355e7541fa3
+  --expect-sha256 5c05f220396f3d74fba87c2610349ec9d17a445b01cf295c32dd0355e7541fa3 \
+  --html "$work/report.html"
 ```
 
 The command verifies 33 input files and 13 analyses. For example, all 4 projected calendar decisions reproduce. The unchanged-input control reproduces none. The kitchen repeat matches both roles, but each changed partner alters a recorded history. On both receipt-board runs, the external worker actions agree while strict policy reproduction remains zero. Some checks reuse trials. The archive has SHA-256 `59a7805804f6564e5671f16e106465d41fd4c904f2737226727d92c77512c7c9`; it is distinct from the canonical manifest pin above.

@@ -1,6 +1,8 @@
 # SeatLab
 
-**Replay one agent's decision with different context, without rerunning the team.** SeatLab is a standard-library Python CLI. It does not need Harbor, Docker, an API key, or a running model. Native worlds produce evidence. SeatLab asks a separate question: what does a policy do when you change only the input it receives?
+**Find the first decision that changes when you change one agent's context or partner.** SeatLab compares what each participant could see and what it actually did. It can replay a decision offline or compare two real team runs. The CLI uses the Python standard library. It needs no model, API key, Docker, or Harbor installation to analyze a recording.
+
+**Start with evidence:** [Open a verified study without Docker or keys](docs/evidence.md). It shows how a context change affects 200 five-person calendar cases, and why equal Hanabi scores can hide different team histories. The downloads include the underlying records and a command to check the results yourself.
 
 ## Try it on real decisions
 
@@ -37,6 +39,8 @@ Can you predict what a different team run will actually do? The source coordinat
 Open `report.html` in the output directory to inspect each native pair. The file needs no server. The same command still prints machine-readable JSON.
 
 On these 4 cases, all 4 native actions change from a time to an explicit null. The replay reproduces all 4 target inputs, actions, and scores. The unchanged-input control reproduces none. This tests a deterministic channel change, not a model's general ability. See the [protocol and negative controls](docs/native-calibration.md).
+
+The [complete experiment](https://github.com/PeterMakhnatch/harbor-multiagent/blob/b5f7a33511775604f9507e64acb37f11e23bbcab/adapters/masbench-scheduling/cohort-results.md) repeats this on 200 published cases with 400 independent native trials. The projected input, action and score matched 200/200 target trials. The team found the published earliest time on only 15/200 targets. Reproducing a decision does not make it a good decision.
 
 ## Find where interactive replay stops
 
@@ -79,7 +83,7 @@ The [receipt board](examples/receipt-board/) is a complete 2-seat Olam task. Run
 
 ## Verify someone else's study offline
 
-Run `seatlab study verify study.json --expect-sha256 "$STUDY_SHA256"`. It checks the original input bytes and recomputes each registered analysis. It runs no code from the study. The [portable study guide](docs/portable-studies.md) shows how to publish one. A verified report can still contain a failed policy or missing evidence.
+Run `seatlab study verify study.json --expect-sha256 "$STUDY_SHA256" --html report.html`. It checks the input bytes, recomputes every registered report and writes an offline summary you can open in a browser. It runs no code from the study. The [portable study guide](docs/portable-studies.md) shows how to publish one. A verified report can still contain a failed policy or missing evidence.
 
 ## What belongs where
 

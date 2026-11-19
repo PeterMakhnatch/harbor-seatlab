@@ -37,3 +37,14 @@ A matching prefix is not a matching terminal result. If the shorter recording is
 ## Share the comparison
 
 Use the `team-alignment` check in a [portable study](portable-studies.md) to pin both tapes, both order files and the report. A reader needs no task code, model, Docker daemon or credentials.
+
+The [native game study](https://github.com/PeterMakhnatch/harbor-seatlab/releases/download/v0.9.0/native-world-order.tar.gz) contains 32 Hanabi trials and 6 kitchen trials. Extract it and run:
+
+```sh
+seatlab study verify study.json \
+  --expect-sha256 b59355f4770b6d834d328816ea90bc7b99dead6ef90bb8d83879965c8d177b97
+seatlab team-align kitchen/A-TT.jsonl kitchen/A-WT.jsonl \
+  --source-order kitchen/A-TT.order.json --target-order kitchen/A-WT.order.json
+```
+
+The two chefs act together. At step 1, the substituted chef changes its action. The other chef's input and action still match at that step. This is stronger evidence than sorting the two log writes by arrival time. For an alternating example, see the [matched-deck Hanabi result](https://github.com/PeterMakhnatch/harbor-multiagent/blob/1f9da5ecb0267e25d60bc034404a4601902f7504/adapters/hanabi-crossplay/results.md).

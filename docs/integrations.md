@@ -28,6 +28,8 @@ The [retained integration control](https://github.com/PeterMakhnatch/harbor-mult
 
 **Standalone trial control:** In [13 native team trials](https://github.com/PeterMakhnatch/harbor-multiagent/blob/e17621248a1dd54d56565ed35e043b2b960af0d4/examples/seatlab/native-model-results.md#can-stock-eval-lab-read-these-trials), stock `load_trial` returns 13 UUIDs, 26 seat records and 12 known shared scores. The read-only census finds all 13 paths and UUIDs, but projects no rewards because standalone trials lack a native job UUID. The optional bridge keeps missing jobs, trial scores and seat usage separate. It does not invent jobs to complete a join.
 
+**Native job control:** The [two-variant receipt-board job](https://github.com/PeterMakhnatch/harbor-multiagent/blob/5da42e965f2f8f491badfa3009bac5ab9f1c8a6a/examples/seatlab/receipt-job-results.md) has 1 native job UUID, 2 trial UUIDs, 4 participant executions and 2 shared rewards. Both stock Eval Lab readers agree on the job, trials and rewards. Changing each seat's context changes both decisions without changing either team reward. All 4 token records stay unknown. No shared database is needed.
+
 ## Independent work for contributors
 
 | What you own | Interface | Evidence to return |
