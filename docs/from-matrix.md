@@ -73,6 +73,19 @@ The return folder is a **trusted scheduling label**, not proof of executable ide
 
 If 2 compatible teams return, the output also contains a sealed `candidate/` and `recheck.json`. If no comparison is possible, it writes only `collection.json`. Do not count that as a successful behavior test. An empty return folder is valid evidence that no jobs returned. A missing return root is an input error.
 
+### Bind worker folders to the scheduler
+
+Two teams can play the same case with completely different native trial UUIDs. Their behavior criteria may still agree. If you need to detect a misrouted return, record the mapping from logical job ID to the UUID in the **launcher's native result**, separately from the returned role recordings. Do not derive this map from the return folders you intend to verify.
+
+```sh
+seatlab study collect-jobs source returned --receipt source-pin.json --out bound-result \
+  --launch-registry launches.json --expect-launch-sha256 "$TRUSTED_LAUNCH_DIGEST"
+```
+
+A `seatlab.launch-registry/v1` document contains `worklist_sha256` and `trials`. `trials` maps **every** scheduled ID to its native trial UUID, or `null` if the launcher has no native result. Reject a returned UUID assigned to another job, including on the same case. A recorded launch with no return stays missing. A different worklist, an unknown job ID, or a reused source UUID is invalid. A registry never determines a behavior score.
+
+Keep the canonical registry digest in a coordinator-controlled channel. This binds job identity to the recorded native trial. It does not attest which executable, model revision, or container actually ran. On an untrusted scheduler, you need an independent attestation before making those claims.
+
 For manual integrations, use `source/candidate-matrix.json` as the new input matrix. `worklist_sha256` and `candidate_matrix_sha256` are canonical JSON digests, not checksums of newline-terminated files. Your scheduler still owns assignment, launch and retries. The [hosted example](../.github/workflows/native-hanabi.yml) runs one stock world per independent worker.
 
 Archive the **original** source pins separately from future candidates. In CI, use those trusted values. Recomputing both source pins from an untrusted download does not establish trust. The study pin is a canonical digest, not a file checksum.

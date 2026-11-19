@@ -79,6 +79,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--receipt", type=Path, required=True, help="separately trusted source build receipt"
     )
     collect.add_argument("--out", type=Path, required=True, help="new collection directory")
+    collect.add_argument(
+        "--launch-registry",
+        type=Path,
+        help="separately recorded assignments of native trial UUIDs",
+    )
+    collect.add_argument(
+        "--expect-launch-sha256", help="trusted canonical digest of that launcher registry"
+    )
     seal = study_commands.add_parser("seal", help="record file and analysis digests")
     seal.add_argument("recipe", type=Path)
     seal.add_argument(
@@ -295,7 +303,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             elif args.study_action == "build-matrix":
                 result = build_matrix(args.matrix, args.out)
             elif args.study_action == "collect-jobs":
-                result = collect_jobs(args.source, args.returns, args.receipt, args.out)
+                result = collect_jobs(
+                    args.source,
+                    args.returns,
+                    args.receipt,
+                    args.out,
+                    launch_registry=args.launch_registry,
+                    expect_launch_sha256=args.expect_launch_sha256,
+                )
                 exit_code = recheck_exit_code(result)
             elif args.study_action == "recheck":
                 result = recheck_panel(

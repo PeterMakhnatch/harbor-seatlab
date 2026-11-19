@@ -1,0 +1,127 @@
+{
+  "complete": {
+    "assignment_basis": "launch-registry",
+    "jobs": {
+      "expected": [
+        "d00.ll",
+        "d00.lr",
+        "d00.rl",
+        "d00.rr"
+      ],
+      "missing": [],
+      "received": [
+        "d00.ll",
+        "d00.lr",
+        "d00.rl",
+        "d00.rr"
+      ]
+    },
+    "launch_registry_sha256": "6ba8d4bad0138d1ca24e2ef470f0bc31426e59ea2865135a0c39db7b52e9e373",
+    "native_trials": {
+      "d00.ll": "8bf2ba74-f176-42b5-bd46-2da4ae956408",
+      "d00.lr": "15a55fee-ecbf-4946-9389-bea51a036fbd",
+      "d00.rl": "e3687224-f0fd-4bea-b54a-fe416b6b8743",
+      "d00.rr": "84670d85-f634-408c-b756-3e582aa2a4bf"
+    },
+    "recheck": {
+      "changed": 0,
+      "entries": 8,
+      "stable": 8,
+      "unknown": 0
+    },
+    "schema": "seatlab.worker-collection/v1",
+    "source_pins": {
+      "candidate_matrix_sha256": "3b3638104923bb41ea7289f219efae009e444f04a1f1322992118705bbca139f",
+      "design_sha256": "6e46a22efecdea98366db2ddc132123bdb18b7e95dd06646e2d4f82a4934950a",
+      "study_sha256": "9b93b09d4d5d53ebe6c3aa185ff217f8a309cad628ddd0ea71570cea3648e51b",
+      "worklist_sha256": "6160278bb1ced9b2b18d770e7b4966d3f3b08398cfcf430d724da07dcb2ae327"
+    },
+    "status": "matched"
+  },
+  "registry_sha256": "6ba8d4bad0138d1ca24e2ef470f0bc31426e59ea2865135a0c39db7b52e9e373",
+  "same_case_swap_bound": {
+    "code": 2,
+    "diagnostic": "seatlab: received job d00.ll does not match its launch registry UUID",
+    "output_published": false,
+    "status": "refused"
+  },
+  "same_case_swap_unbound": {
+    "assignment_basis": "return-folder",
+    "jobs": {
+      "expected": [
+        "d00.ll",
+        "d00.lr",
+        "d00.rl",
+        "d00.rr"
+      ],
+      "missing": [],
+      "received": [
+        "d00.ll",
+        "d00.lr",
+        "d00.rl",
+        "d00.rr"
+      ]
+    },
+    "launch_registry_sha256": null,
+    "native_trials": {
+      "d00.ll": "15a55fee-ecbf-4946-9389-bea51a036fbd",
+      "d00.lr": "8bf2ba74-f176-42b5-bd46-2da4ae956408",
+      "d00.rl": "e3687224-f0fd-4bea-b54a-fe416b6b8743",
+      "d00.rr": "84670d85-f634-408c-b756-3e582aa2a4bf"
+    },
+    "recheck": {
+      "changed": 0,
+      "entries": 8,
+      "stable": 8,
+      "unknown": 0
+    },
+    "schema": "seatlab.worker-collection/v1",
+    "source_pins": {
+      "candidate_matrix_sha256": "3b3638104923bb41ea7289f219efae009e444f04a1f1322992118705bbca139f",
+      "design_sha256": "6e46a22efecdea98366db2ddc132123bdb18b7e95dd06646e2d4f82a4934950a",
+      "study_sha256": "9b93b09d4d5d53ebe6c3aa185ff217f8a309cad628ddd0ea71570cea3648e51b",
+      "worklist_sha256": "6160278bb1ced9b2b18d770e7b4966d3f3b08398cfcf430d724da07dcb2ae327"
+    },
+    "status": "matched"
+  },
+  "schema": "seatlab.assignment-control/v1",
+  "withheld_rr": {
+    "assignment_basis": "launch-registry",
+    "jobs": {
+      "expected": [
+        "d00.ll",
+        "d00.lr",
+        "d00.rl",
+        "d00.rr"
+      ],
+      "missing": [
+        "d00.rr"
+      ],
+      "received": [
+        "d00.ll",
+        "d00.lr",
+        "d00.rl"
+      ]
+    },
+    "launch_registry_sha256": "6ba8d4bad0138d1ca24e2ef470f0bc31426e59ea2865135a0c39db7b52e9e373",
+    "native_trials": {
+      "d00.ll": "8bf2ba74-f176-42b5-bd46-2da4ae956408",
+      "d00.lr": "15a55fee-ecbf-4946-9389-bea51a036fbd",
+      "d00.rl": "e3687224-f0fd-4bea-b54a-fe416b6b8743"
+    },
+    "recheck": {
+      "changed": 0,
+      "entries": 8,
+      "stable": 4,
+      "unknown": 4
+    },
+    "schema": "seatlab.worker-collection/v1",
+    "source_pins": {
+      "candidate_matrix_sha256": "3b3638104923bb41ea7289f219efae009e444f04a1f1322992118705bbca139f",
+      "design_sha256": "6e46a22efecdea98366db2ddc132123bdb18b7e95dd06646e2d4f82a4934950a",
+      "study_sha256": "9b93b09d4d5d53ebe6c3aa185ff217f8a309cad628ddd0ea71570cea3648e51b",
+      "worklist_sha256": "6160278bb1ced9b2b18d770e7b4966d3f3b08398cfcf430d724da07dcb2ae327"
+    },
+    "status": "incomplete"
+  }
+}
