@@ -1,0 +1,295 @@
+{
+  "runs": {
+    "calendar": {
+      "coverage": {
+        "ambiguous": 0,
+        "distinct_jobs": 0,
+        "executions": 2000,
+        "found": 400,
+        "job_trials": 0,
+        "missing": 0,
+        "referenced": 400,
+        "registered_missing_sides": 0,
+        "relation_rows": 400,
+        "role_executions": {
+          "m1": 400,
+          "m2": 400,
+          "m3": 400,
+          "m4": 400,
+          "m5": 400
+        },
+        "single_agent_executions": 0,
+        "skipped_entries": 0,
+        "standalone_trials": 400,
+        "unreferenced": 0
+      },
+      "outcomes": [
+        {
+          "kind": "calibration",
+          "outcome": "different",
+          "relations": 185,
+          "status": "mismatch"
+        },
+        {
+          "kind": "calibration",
+          "outcome": "equal",
+          "relations": 15,
+          "status": "mismatch"
+        },
+        {
+          "kind": "calibration",
+          "outcome": "different",
+          "relations": 185,
+          "status": "reproduced"
+        },
+        {
+          "kind": "calibration",
+          "outcome": "equal",
+          "relations": 15,
+          "status": "reproduced"
+        }
+      ],
+      "relations_file_sha256": "2c9c3edcd5d1e7b1cbd342bcef8ed84650ffc4d6c9ee08a4ae3f2f27dbd8425f",
+      "shared_scores": {
+        "found_ids": 400,
+        "mean_score": 0.5375,
+        "scored_ids": 400,
+        "unscored_ids": 0
+      },
+      "study_sha256": "b140630534d5776c33b52a95aaaa6fc76eae0f73cf9161737541bbcad69ba5d9",
+      "usage": {
+        "cost_usd": {
+          "known_ids": 0,
+          "partial_ids": 0,
+          "total": null,
+          "unknown_ids": 400
+        },
+        "n_cache_tokens": {
+          "known_ids": 0,
+          "partial_ids": 0,
+          "total": null,
+          "unknown_ids": 400
+        },
+        "n_input_tokens": {
+          "known_ids": 0,
+          "partial_ids": 0,
+          "total": null,
+          "unknown_ids": 400
+        },
+        "n_output_tokens": {
+          "known_ids": 0,
+          "partial_ids": 0,
+          "total": null,
+          "unknown_ids": 400
+        }
+      }
+    },
+    "native-job": {
+      "coverage": {
+        "ambiguous": 0,
+        "distinct_jobs": 1,
+        "executions": 4,
+        "found": 2,
+        "job_trials": 2,
+        "missing": 0,
+        "referenced": 2,
+        "registered_missing_sides": 0,
+        "relation_rows": 2,
+        "role_executions": {
+          "p1": 2,
+          "p2": 2
+        },
+        "single_agent_executions": 0,
+        "skipped_entries": 0,
+        "standalone_trials": 0,
+        "unreferenced": 0
+      },
+      "outcomes": [
+        {
+          "kind": "alignment",
+          "outcome": "equal",
+          "relations": 2,
+          "status": "input_changed"
+        }
+      ],
+      "relations_file_sha256": "8b3751c7ad83245058708717a0cd96f4813d64347bfa8549526dcecd5afc506a",
+      "shared_scores": {
+        "found_ids": 2,
+        "mean_score": 1.0,
+        "scored_ids": 2,
+        "unscored_ids": 0
+      },
+      "study_sha256": "f289c8c89a12bcb8c25753a8b3f5a5ac389825baceba874921e6e2587556110d",
+      "usage": {
+        "cost_usd": {
+          "known_ids": 0,
+          "partial_ids": 0,
+          "total": null,
+          "unknown_ids": 2
+        },
+        "n_cache_tokens": {
+          "known_ids": 0,
+          "partial_ids": 0,
+          "total": null,
+          "unknown_ids": 2
+        },
+        "n_input_tokens": {
+          "known_ids": 0,
+          "partial_ids": 0,
+          "total": null,
+          "unknown_ids": 2
+        },
+        "n_output_tokens": {
+          "known_ids": 0,
+          "partial_ids": 0,
+          "total": null,
+          "unknown_ids": 2
+        }
+      }
+    },
+    "native-job-missing-target": {
+      "coverage": {
+        "ambiguous": 0,
+        "distinct_jobs": 1,
+        "executions": 2,
+        "found": 1,
+        "job_trials": 1,
+        "missing": 1,
+        "referenced": 2,
+        "registered_missing_sides": 0,
+        "relation_rows": 2,
+        "role_executions": {
+          "p1": 1,
+          "p2": 1
+        },
+        "single_agent_executions": 0,
+        "skipped_entries": 0,
+        "standalone_trials": 0,
+        "unreferenced": 0
+      },
+      "outcomes": [
+        {
+          "kind": "alignment",
+          "outcome": "unknown",
+          "relations": 2,
+          "status": "input_changed"
+        }
+      ],
+      "relations_file_sha256": "8b3751c7ad83245058708717a0cd96f4813d64347bfa8549526dcecd5afc506a",
+      "shared_scores": {
+        "found_ids": 1,
+        "mean_score": 1.0,
+        "scored_ids": 1,
+        "unscored_ids": 0
+      },
+      "study_sha256": "f289c8c89a12bcb8c25753a8b3f5a5ac389825baceba874921e6e2587556110d",
+      "usage": {
+        "cost_usd": {
+          "known_ids": 0,
+          "partial_ids": 0,
+          "total": null,
+          "unknown_ids": 1
+        },
+        "n_cache_tokens": {
+          "known_ids": 0,
+          "partial_ids": 0,
+          "total": null,
+          "unknown_ids": 1
+        },
+        "n_input_tokens": {
+          "known_ids": 0,
+          "partial_ids": 0,
+          "total": null,
+          "unknown_ids": 1
+        },
+        "n_output_tokens": {
+          "known_ids": 0,
+          "partial_ids": 0,
+          "total": null,
+          "unknown_ids": 1
+        }
+      }
+    },
+    "pettingzoo": {
+      "coverage": {
+        "ambiguous": 0,
+        "distinct_jobs": 0,
+        "executions": 28,
+        "found": 13,
+        "job_trials": 0,
+        "missing": 3,
+        "referenced": 16,
+        "registered_missing_sides": 0,
+        "relation_rows": 13,
+        "role_executions": {
+          "p0": 13,
+          "p1": 13,
+          "p2": 2
+        },
+        "single_agent_executions": 0,
+        "skipped_entries": 0,
+        "standalone_trials": 13,
+        "unreferenced": 1
+      },
+      "outcomes": [
+        {
+          "kind": "team-alignment",
+          "outcome": "equal",
+          "relations": 5,
+          "status": "matched"
+        },
+        {
+          "kind": "team-alignment",
+          "outcome": "unknown",
+          "relations": 3,
+          "status": "matched"
+        },
+        {
+          "kind": "team-alignment",
+          "outcome": "equal",
+          "relations": 5,
+          "status": "step_changed"
+        }
+      ],
+      "relations_file_sha256": "295144b3cb79e5adab533855ee40aa6c1acf1d3572a0bb2aaf8241d4737209dc",
+      "shared_scores": {
+        "found_ids": 13,
+        "mean_score": 1.0,
+        "scored_ids": 13,
+        "unscored_ids": 0
+      },
+      "study_sha256": "5100104afd2a2bd8194ee393e9cc68628046ccd750e7adfa04f7f843cc11afcf",
+      "usage": {
+        "cost_usd": {
+          "known_ids": 0,
+          "partial_ids": 0,
+          "total": null,
+          "unknown_ids": 13
+        },
+        "n_cache_tokens": {
+          "known_ids": 0,
+          "partial_ids": 0,
+          "total": null,
+          "unknown_ids": 13
+        },
+        "n_input_tokens": {
+          "known_ids": 0,
+          "partial_ids": 0,
+          "total": null,
+          "unknown_ids": 13
+        },
+        "n_output_tokens": {
+          "known_ids": 0,
+          "partial_ids": 0,
+          "total": null,
+          "unknown_ids": 13
+        }
+      }
+    }
+  },
+  "schema": "seatlab.measured-stock-joins/v1",
+  "sources": {
+    "eval_lab": "b9dd192458c88f1fa6b898be292a7eb94fe15a96",
+    "olam_harbor": "6aeb609e31fd77e5f89ce3bcb018db8045520fb7"
+  }
+}

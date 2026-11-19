@@ -20,6 +20,7 @@ from .replay import replay
 from .report import compare, describe
 from .study import StudyMismatch, seal_study, verify_study
 from .study_html import write_study_html
+from .study_relations import export_relations
 from .sufficiency import audit_context
 from .tape import digest
 from .team_alignment import team_align
@@ -50,7 +51,9 @@ def _transform_arguments(parser: argparse.ArgumentParser) -> None:
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="seatlab", description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
-    study = commands.add_parser("study", help="seal or verify a portable native study")
+    study = commands.add_parser(
+        "study", help="seal, verify or export relations of a portable native study"
+    )
     study_commands = study.add_subparsers(dest="study_action", required=True)
     seal = study_commands.add_parser("seal", help="record file and analysis digests")
     seal.add_argument("recipe", type=Path)
@@ -62,6 +65,16 @@ def main(argv: Sequence[str] | None = None) -> int:
     verify.add_argument("--expect-sha256", help="trusted canonical manifest digest")
     verify.add_argument(
         "--html", type=Path, help="also write a new, self-contained HTML report"
+    )
+    relations = study_commands.add_parser(
+        "relations", help="export one verified JSONL row per registered comparison"
+    )
+    relations.add_argument("manifest", type=Path)
+    relations.add_argument(
+        "--expect-sha256", required=True, help="trusted canonical manifest digest"
+    )
+    relations.add_argument(
+        "--out", type=Path, required=True, help="new relation file (JSONL)"
     )
     ingest = commands.add_parser(
         "from-handoff", help="import a public native Dispatch Handoff study"
@@ -209,6 +222,10 @@ def main(argv: Sequence[str] | None = None) -> int:
                     "schema": "seatlab.study-seal/v1",
                     "study_sha256": digest(manifest),
                 }
+            elif args.study_action == "relations":
+                result = export_relations(
+                    args.manifest, args.out, expect_sha256=args.expect_sha256
+                )
             else:
                 result = verify_study(args.manifest, expect_sha256=args.expect_sha256)
                 if args.html is not None:
