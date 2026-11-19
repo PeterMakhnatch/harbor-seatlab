@@ -20,6 +20,7 @@
         <li><a href="pettingzoo.html">PettingZoo</a></li>
         <li><a href="calendar.html">Calendar</a></li>
         <li><a href="team.html">Hanabi &amp; kitchen</a></li>
+        <li><a href="#coordination">Context &amp; communication</a></li>
       </ul>
     </nav>
   </div>
@@ -131,6 +132,28 @@
     </article>
   </section>
 
+  <section id="coordination" class="stories wrap" aria-labelledby="coord-title">
+    <h2 id="coord-title">What does the participant actually receive?</h2>
+    <article class="story" aria-labelledby="window-title">
+      <p class="kicker">Private history &middot; 6 native rock-paper-scissors games &middot; 144 measured decisions</p>
+      <h3 id="window-title"><a href="policy-windows.html">One past observation helps. Four cost more.</a></h3>
+      <dl>
+        <div><dt><span class="tag score">Score</span></dt><dd>One past turn raises payoff from +9 to +12 against one opponent, and from +9 to +11 against the other.</dd></div>
+        <div><dt><span class="tag process">Process</span></dt><dd>Four past turns instead of one cost 1,674 more input bytes per game. The predictor changes none of its 24 paired moves. This fixed predictor is not a language model.</dd></div>
+      </dl>
+      <p class="go"><a href="policy-windows.html">Verify the 4 team comparisons &rarr;</a> <a class="src" href="https://github.com/PeterMakhnatch/harbor-multiagent/blob/d191c83d4bfce200e1302766601b1d7f0a1056a7/adapters/pettingzoo-seats/window-experiment/results.md">Results, actor receipts and commands</a></p>
+    </article>
+    <article class="story" aria-labelledby="signal-title">
+      <p class="kicker">Cooperative communication &middot; 15 native speaker-listener games &middot; 3 fixed seeds</p>
+      <h3 id="signal-title"><a href="speaker-listener.html">Different signals. The same 60 listener moves.</a></h3>
+      <dl>
+        <div><dt><span class="tag score">Score</span></dt><dd>Every game gets the same Harbor completion reward: 1. The game returns still distinguish the matched and mismatched partners on these seeds.</dd></div>
+        <div><dt><span class="tag process">Process</span></dt><dd>Rotating both codebooks changes the first signal on all 3 seeds. No listener move or physical observation changes. Rotating just one codebook changes movement in all 6 comparisons.</dd></div>
+      </dl>
+      <p class="go"><a href="speaker-listener.html">Verify the 12 team comparisons &rarr;</a> <a class="src" href="https://github.com/PeterMakhnatch/harbor-multiagent/blob/d191c83d4bfce200e1302766601b1d7f0a1056a7/adapters/pettingzoo-seats/communication-experiment/results.md">Results, direct-engine check and commands</a></p>
+    </article>
+  </section>
+
   <section class="quick wrap" aria-labelledby="qs-title">
     <h2 id="qs-title">Quickstart: check the numbers, then record your own task</h2>
     <ol class="steps">
@@ -156,6 +179,10 @@ tar -xzf "$work/native.tar.gz" -C "$work"
 <pre tabindex="0" aria-label="Recording helpers"><code>from seatlab.author import accepted_frame, decision_from_frame, episode_from_frames</code></pre>
         <p class="fine">The offline path needs no Harbor installation. The native path uses Docker and no model key. See the <a href="https://github.com/PeterMakhnatch/harbor-seatlab/blob/v0.10.0/docs/authoring.md">author guide</a>.</p>
       </li>
+      <li>
+        <h3>Join the study to a native Harbor job</h3>
+        <p>The <a href="https://github.com/PeterMakhnatch/harbor-seatlab/blob/v0.11.0/examples/eval-lab/measured.md">stock Eval Lab example</a> reads 2 trials, 4 participant executions, and only 2 shared rewards. A withheld trial stays unknown.</p>
+      </li>
     </ol>
   </section>
 
@@ -165,6 +192,7 @@ tar -xzf "$work/native.tar.gz" -C "$work"
       <li><a href="https://github.com/PeterMakhnatch/harbor-multiagent/blob/feat/seatlab-pettingzoo/adapters/pettingzoo-seats/results.md">PettingZoo results and protocol</a> <span>native attempts, branches, Ubuntu repeat</span></li>
       <li><a href="https://github.com/PeterMakhnatch/harbor-seatlab/blob/v0.10.0/docs/evidence.md">Stable evidence note, v0.10.0</a> <span>pinned digests for the calendar and team studies</span></li>
       <li><a href="https://github.com/PeterMakhnatch/harbor-seatlab/releases/tag/v0.10.0">Release v0.10.0</a> <span>wheel, archives, and offline report files</span></li>
+      <li><a href="https://github.com/PeterMakhnatch/harbor-seatlab/releases/tag/v0.11.0">Release v0.11.0</a> <span>verified policy windows, speaker-listener games and stock Eval Lab join</span></li>
     </ul>
     <ul class="limits">
       <li>Reproducing a decision does not make it a good decision.</li>

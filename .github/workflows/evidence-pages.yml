@@ -21,7 +21,7 @@ jobs:
         with:
           persist-credentials: false
           sparse-checkout: site
-      - name: Build from site/ and the 3 pinned release reports
+      - name: Build from the static page and pinned release reports
         run: python3 site/build.py --out "$RUNNER_TEMP/gallery"
       - name: Upload only the built gallery
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
