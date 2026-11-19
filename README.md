@@ -30,8 +30,11 @@ Can you predict what a different team run will actually do? The source coordinat
 .venv/bin/seatlab replay examples/meeting-sources.jsonl --policy intersection \
   --transform-file examples/meeting-first8.json --out "$run/predicted.jsonl"
 .venv/bin/seatlab calibrate examples/meeting.jsonl "$run/predicted.jsonl" \
-  --pairs examples/meeting-pairs.json --transform-file examples/meeting-first8.json
+  --pairs examples/meeting-pairs.json --transform-file examples/meeting-first8.json \
+  --html "$run/report.html"
 ```
+
+Open `report.html` in the output directory to inspect each native pair. The file needs no server. The same command still prints machine-readable JSON.
 
 On these 4 cases, all 4 native actions change from a time to an explicit null. The replay reproduces all 4 target inputs, actions, and scores. The unchanged-input control reproduces none. This tests a deterministic channel change, not a model's general ability. See the [protocol and negative controls](docs/native-calibration.md).
 
