@@ -145,12 +145,21 @@
     </article>
     <article class="story" aria-labelledby="signal-title">
       <p class="kicker">Cooperative communication &middot; 15 native speaker-listener games &middot; 3 fixed seeds</p>
-      <h3 id="signal-title"><a href="speaker-listener.html">Different signals. The same 60 listener moves.</a></h3>
+      <h3 id="signal-title"><a href="role-trajectories.html">Different signals. The same 60 listener moves.</a></h3>
       <dl>
         <div><dt><span class="tag score">Score</span></dt><dd>Every game gets the same Harbor completion reward: 1. The game returns still distinguish the matched and mismatched partners on these seeds.</dd></div>
         <div><dt><span class="tag process">Process</span></dt><dd>Rotating both codebooks changes the first signal on all 3 seeds. No listener move or physical observation changes. Rotating just one codebook changes movement in all 6 comparisons.</dd></div>
       </dl>
-      <p class="go"><a href="speaker-listener.html">Verify the 12 team comparisons &rarr;</a> <a class="src" href="https://github.com/PeterMakhnatch/harbor-multiagent/blob/d191c83d4bfce200e1302766601b1d7f0a1056a7/adapters/pettingzoo-seats/communication-experiment/results.md">Results, direct-engine check and commands</a></p>
+      <p class="go"><a href="role-trajectories.html">Inspect the 37 role measurements &rarr;</a> <a class="src" href="speaker-listener.html">Compare the first team difference</a> <a class="src" href="https://github.com/PeterMakhnatch/harbor-multiagent/blob/d191c83d4bfce200e1302766601b1d7f0a1056a7/adapters/pettingzoo-seats/communication-experiment/results.md">Independent simulator and native results</a></p>
+    </article>
+    <article class="story" aria-labelledby="native-chat-title">
+      <p class="kicker">Olam's original Mindustry task &middot; 2 real trials &middot; no gameplay actions</p>
+      <h3 id="native-chat-title"><a href="https://github.com/PeterMakhnatch/harbor-seatlab/blob/09a2e2b29937c70682e30ec18e6e36e7791969ac/examples/mindustry-chat/results.md">The server accepted both messages. Only one participant showed a read.</a></h3>
+      <dl>
+        <div><dt><span class="tag score">Score</span></dt><dd>Neither trial measures survival. Both participants stop when the communication protocol ends. Neither missing reward is zero.</dd></div>
+        <div><dt><span class="tag process">Process</span></dt><dd>The receiver that read the fresh challenge recorded it and sent a matching reply. The no-read receiver did neither. Both challenges still appear in the original server journal.</dd></div>
+      </dl>
+      <p class="go"><a href="https://github.com/PeterMakhnatch/harbor-seatlab/blob/09a2e2b29937c70682e30ec18e6e36e7791969ac/examples/mindustry-chat/results.json">Read the two public receipts &rarr;</a> <a class="src" href="https://github.com/PeterMakhnatch/harbor-seatlab/actions/runs/44541369056">Original game on Ubuntu</a></p>
     </article>
   </section>
 
@@ -182,6 +191,7 @@ tar -xzf "$work/native.tar.gz" -C "$work"
       <li>
         <h3>Join the study to a native Harbor job</h3>
         <p>The <a href="https://github.com/PeterMakhnatch/harbor-seatlab/blob/v0.11.0/examples/eval-lab/measured.md">stock Eval Lab example</a> reads 2 trials, 4 participant executions, and only 2 shared rewards. A withheld trial stays unknown.</p>
+        <p>Use the <a href="https://github.com/PeterMakhnatch/harbor-seatlab/blob/5c9e414af9cb772e8e7684c6f8b237dc6f59a9a4/docs/github-action.md">pinned GitHub Action</a> to require the verified study in another repository. This <a href="https://github.com/PeterMakhnatch/harbor-multiagent/actions/runs/44543633325">working consumer</a> checks a genuine job and refuses a different trusted digest.</p>
       </li>
     </ol>
   </section>
