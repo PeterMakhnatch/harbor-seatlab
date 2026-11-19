@@ -6,8 +6,8 @@ import re
 from typing import cast
 
 from . import tape as wire
-from .projection import Projection
 from .panel import DESIGN_SCHEMA, MAX_CASES, MAX_CRITERIA, _parse_design
+from .projection import Projection
 from .study_contract import MAX_CHECKS, RECIPE_SCHEMA, parse_recipe, validate_path
 
 MATRIX_SCHEMA = "seatlab.panel-matrix/v1"
@@ -50,7 +50,8 @@ def compile_matrix(
     raw_contrasts = _mapping(top["contrasts"], "contrasts", 1, MAX_CRITERIA)
     contrasts: dict[str, dict[str, object]] = {}
     arms: set[str] = set()
-    seen_measure: set[tuple[str, str, str, tuple[str, ...]]] = set()
+    measurements: dict[str, tuple[tuple[str, str], str, tuple[str, ...]]] = {}
+    seen_measure: set[tuple[tuple[str, str], str, tuple[str, ...]]] = set()
     for name, raw in raw_contrasts.items():
         _label(name, "contrast label")
         item = _exact(raw, _CONTRAST, frozenset({"fields"}), f"contrast {name!r}")
@@ -63,16 +64,11 @@ def compile_matrix(
         fields = item.get("fields")
         if "fields" in item and (type(fields) is not list or not fields):
             raise wire.TapeError(f"contrast {name!r} fields must be a nonempty array")
-        if fields is not None:
-            Projection(
-                cast(list[str], fields)
-            )  # Also validate a contrast missing on every case.
-        measure = (
-            source,
-            target,
-            cast(str, item["role"]),
-            tuple(sorted(cast(list[str], fields or []))),
-        )
+        # Comparing equality or difference is symmetric in the two native arms.
+        pair = (source, target) if source < target else (target, source)
+        pointers = Projection(cast(list[str] | None, fields)).fields or ()
+        measure = (pair, cast(str, item["role"]), pointers)
+        measurements[name] = measure
         if measure in seen_measure:
             raise wire.TapeError(
                 f"contrast {name!r} duplicates another contrast's measurement"
@@ -87,7 +83,7 @@ def compile_matrix(
     criteria: list[dict[str, object]] = []
     bound: list[tuple[str, str]] = []  # (criterion id, contrast) in declared order
     used: set[str] = set()
-    alias: set[tuple[str, str, str]] = set()
+    alias: set[tuple[tuple[str, str], str, tuple[str, ...], str, str]] = set()
     for raw in raw_criteria:
         item = _exact(raw, _CRITERION, frozenset(), "criterion")
         cid, contrast = item["id"], item["contrast"]
@@ -97,7 +93,15 @@ def compile_matrix(
             raise wire.TapeError(f"criterion {cid!r} names an undeclared contrast")
         if type(item["dimension"]) is not str or type(item["when"]) is not str:
             raise wire.TapeError(f"criterion {cid!r} needs a dimension and direction")
-        key = (contrast, cast(str, item["dimension"]), cast(str, item["when"]))
+        pair, role, pointers = measurements[contrast]
+        dim = cast(str, item["dimension"])
+        key = (
+            pair,
+            role,
+            pointers if dim == "selected_view" else (),
+            dim,
+            cast(str, item["when"]),
+        )
         if key in alias:
             raise wire.TapeError(
                 f"criterion {cid!r} duplicates another criterion's measurement"

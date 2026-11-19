@@ -247,6 +247,21 @@ class MatrixBuild(unittest.TestCase):
                     self.matrix("in", {"d00": {"aa": "a/1", bad: "a/2"}}, contrasts=con)
                 )
 
+    def test_two_selectors_cannot_double_count_the_same_accepted_action(self):
+        self.inputs("in", 10, {"d00": ("a/1", "a/2")}, {"d00": 0})
+        cases = {"d00": {"aa": "a/1", "ab": "a/2"}}
+        contrasts = {
+            "signal": dict(CONTRAST, fields=["/signal"]),
+            "position": dict(CONTRAST, source="ab", target="aa", fields=["/position"]),
+        }
+        criteria = [dict(CRITERIA[0], id=n, contrast=n) for n in contrasts]
+        self.refused(self.matrix("in", cases, contrasts=contrasts, criteria=criteria))
+        distinct = [dict(row, dimension="selected_view") for row in criteria]
+        receipt, _ = self.build(
+            self.matrix("in", cases, contrasts=contrasts, criteria=distinct)
+        )
+        self.assertEqual(receipt["checks"], 2)
+
     def test_structural_misuse_is_refused(self):
         self.inputs("in", 10, {"d00": ("a/1", "a/2")}, {"d00": 0})
         ok = {"aa": "a/1", "ab": "a/2"}

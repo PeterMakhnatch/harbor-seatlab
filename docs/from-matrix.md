@@ -51,7 +51,19 @@ seatlab study panel source/study.json --design source/panel-design.json \
 jq '.selection' panel.json
 ```
 
-Repeat the selected cases with the required teams in Harbor. Use fresh native UUIDs. Keep the case, arm and contrast labels. Do not copy a source trial for an unchanged control. Export the new recordings to a separate candidate input directory. Candidate folders may have different names.
+### Send the selected cases to independent native workers
+
+The source build writes `worklist.json` and `candidate-matrix.json`. Keep their receipt pins separately. The worklist has one job per distinct case and arm, even if several criteria need it. It includes both arms for each measured comparison, including an opposite result. It has no command, credentials, source trial UUID or machine-specific path.
+
+```sh
+mkdir -p candidate-input/jobs
+cp source/candidate-matrix.json candidate-input/matrix.json
+jq -c '.jobs[] | {id,case,arm,criteria}' source/worklist.json
+```
+
+Give each job to one worker. Have it run a **new native world** for that case and arm. Put its 2 exported files in `candidate-input/jobs/<id>/`. A worker need not receive another worker's world. An empty worklist is not a passing result. A missing required folder is an error. To record an intentionally absent run, set its arm to `null` and preserve the changed input separately.
+
+The [hosted example](../.github/workflows/native-hanabi.yml) checks both handoff hashes before collecting independent workers. They are canonical JSON digests (`seatlab.tape.digest`), **not** checksums of the file including its newline. Your runner owns assignment, launch and retries. Keep the case, arm and contrast labels when using a different runner.
 
 ```sh
 seatlab study build-matrix candidate-input/matrix.json --out candidate > candidate-pin.json

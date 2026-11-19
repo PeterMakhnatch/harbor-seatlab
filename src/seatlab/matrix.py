@@ -5,10 +5,11 @@ from __future__ import annotations
 import os
 import shutil
 import tempfile
-from typing import cast
 from pathlib import Path
+from typing import cast
 
 from . import tape as wire
+from .matrix_jobs import plan_native_jobs
 from .matrix_plan import compile_matrix
 from .panel import panel_report
 from .study import seal_study
@@ -32,7 +33,8 @@ def build_matrix(matrix_path: Path, out: Path) -> dict[str, object]:
         raise FileExistsError(f"refusing to overwrite existing output path: {out}")
     if not out.parent.is_dir():
         raise wire.TapeError(f"output parent directory does not exist: {out.parent}")
-    recipe, design, files = compile_matrix(read_document(matrix_path))
+    document = read_document(matrix_path)
+    recipe, design, files = compile_matrix(document)
     stage = Path(tempfile.mkdtemp(prefix=".seatlab-matrix-", dir=out.parent)).resolve()
     created = False
     try:
@@ -53,17 +55,29 @@ def build_matrix(matrix_path: Path, out: Path) -> dict[str, object]:
             raise wire.TapeError(
                 "each measured case/arm must name a distinct native trial UUID"
             )
+        jobs, template = plan_native_jobs(cast(dict[str, object], document), design, report)
+        wire.write_lines(stage / "worklist.json", [jobs])
+        wire.write_lines(stage / "candidate-matrix.json", [template])
         receipt: dict[str, object] = {
             "schema": _SCHEMA,
             "study_sha256": study_sha256,
             "design_sha256": design_sha256,
+            "worklist_sha256": wire.digest(jobs),
+            "candidate_matrix_sha256": wire.digest(template),
             "cases": report["case_count"],
             "checks": len(cast(list[object], manifest["checks"])),
             "native_trials": report["known_native_trials"],
         }
         os.mkdir(out, mode=0o700)
         created = True
-        for name in ("cells", "recipe.json", "panel-design.json", "study.json"):
+        for name in (
+            "cells",
+            "recipe.json",
+            "panel-design.json",
+            "worklist.json",
+            "candidate-matrix.json",
+            "study.json",
+        ):
             os.rename(stage / name, out / name)  # `out` is ours and new; manifest last
         created = False
         return receipt

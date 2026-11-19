@@ -13,7 +13,7 @@ The 4 new physical trials ran in unmodified Olam Harbor with the native OpenSpie
 
 All four teams scored zero. They did not play the same game. In each of 4 substitutions the unchanged player saw a different private history and took a different sequence of actions. Those are the 8 source criteria. Every classification stayed the same across the fresh independent games: **8 stable, 0 changed, 0 unknown**. This is observed repeatability for 1 deck chosen from 8, not a representative sample or a policy ranking. The 8 checks are not independent outcomes.
 
-The [native results](local-native.json) include the 4 UUIDs, game scores and decision counts. The [complete local recheck](local-recheck.json) identifies each independent source/candidate pair. The 7 unselected decks have no new result. For this check the full collector requires 32 games and the frozen panel requires 4.
+The [native results](local-native.json) include the 4 UUIDs, game scores and decision counts. The [complete local recheck](local-recheck.json) identifies each independent source/candidate pair. All 8 original decks covered all 8 criteria. Deck 0 is the lexical tie-break, not a uniquely informative deck. The 7 unselected decks have no new result. For this check the full collector requires 32 games and the frozen panel requires 4.
 
 ## Reproduce this with no game engine
 
