@@ -1,0 +1,217 @@
+{
+  "cases": {
+    "s101": {
+      "plain-blind": "cells/s101-plain-blind",
+      "plain-plain": "cells/s101-plain-plain",
+      "plain-rotate": "cells/s101-plain-rotate",
+      "rotate-plain": "cells/s101-rotate-plain",
+      "rotate-rotate": "cells/s101-rotate-rotate"
+    },
+    "s102": {
+      "plain-blind": "cells/s102-plain-blind",
+      "plain-plain": "cells/s102-plain-plain",
+      "plain-rotate": "cells/s102-plain-rotate",
+      "rotate-plain": "cells/s102-rotate-plain",
+      "rotate-rotate": "cells/s102-rotate-rotate"
+    },
+    "s103": {
+      "plain-blind": "cells/s103-plain-blind",
+      "plain-plain": "cells/s103-plain-plain",
+      "plain-rotate": "cells/s103-plain-rotate",
+      "rotate-plain": "cells/s103-rotate-plain",
+      "rotate-rotate": "cells/s103-rotate-rotate"
+    },
+    "s104": {
+      "plain-blind": "cells/s104-plain-blind",
+      "plain-plain": "cells/s104-plain-plain",
+      "plain-rotate": "cells/s104-plain-rotate",
+      "rotate-plain": "cells/s104-rotate-plain",
+      "rotate-rotate": "cells/s104-rotate-rotate"
+    },
+    "s105": {
+      "plain-blind": "cells/s105-plain-blind",
+      "plain-plain": "cells/s105-plain-plain",
+      "plain-rotate": "cells/s105-plain-rotate",
+      "rotate-plain": "cells/s105-rotate-plain",
+      "rotate-rotate": "cells/s105-rotate-rotate"
+    },
+    "s106": {
+      "plain-blind": "cells/s106-plain-blind",
+      "plain-plain": "cells/s106-plain-plain",
+      "plain-rotate": "cells/s106-plain-rotate",
+      "rotate-plain": "cells/s106-rotate-plain",
+      "rotate-rotate": "cells/s106-rotate-rotate"
+    },
+    "s107": {
+      "plain-blind": "cells/s107-plain-blind",
+      "plain-plain": "cells/s107-plain-plain",
+      "plain-rotate": "cells/s107-plain-rotate",
+      "rotate-plain": "cells/s107-rotate-plain",
+      "rotate-rotate": "cells/s107-rotate-rotate"
+    },
+    "s108": {
+      "plain-blind": "cells/s108-plain-blind",
+      "plain-plain": "cells/s108-plain-plain",
+      "plain-rotate": "cells/s108-plain-rotate",
+      "rotate-plain": "cells/s108-rotate-plain",
+      "rotate-rotate": "cells/s108-rotate-rotate"
+    },
+    "s109": {
+      "plain-blind": "cells/s109-plain-blind",
+      "plain-plain": "cells/s109-plain-plain",
+      "plain-rotate": "cells/s109-plain-rotate",
+      "rotate-plain": "cells/s109-rotate-plain",
+      "rotate-rotate": "cells/s109-rotate-rotate"
+    },
+    "s110": {
+      "plain-blind": "cells/s110-plain-blind",
+      "plain-plain": "cells/s110-plain-plain",
+      "plain-rotate": "cells/s110-plain-rotate",
+      "rotate-plain": "cells/s110-rotate-plain",
+      "rotate-rotate": "cells/s110-rotate-rotate"
+    },
+    "s111": {
+      "plain-blind": "cells/s111-plain-blind",
+      "plain-plain": "cells/s111-plain-plain",
+      "plain-rotate": "cells/s111-plain-rotate",
+      "rotate-plain": "cells/s111-rotate-plain",
+      "rotate-rotate": "cells/s111-rotate-rotate"
+    },
+    "s112": {
+      "plain-blind": "cells/s112-plain-blind",
+      "plain-plain": "cells/s112-plain-plain",
+      "plain-rotate": "cells/s112-plain-rotate",
+      "rotate-plain": "cells/s112-rotate-plain",
+      "rotate-rotate": "cells/s112-rotate-rotate"
+    }
+  },
+  "contrasts": {
+    "plain-blind-physical": {
+      "fields": [
+        "/observation/0",
+        "/observation/1",
+        "/observation/2",
+        "/observation/3",
+        "/observation/4",
+        "/observation/5",
+        "/observation/6",
+        "/observation/7"
+      ],
+      "role": "p1",
+      "source": "plain-plain",
+      "target": "plain-blind"
+    },
+    "plain-rotate-physical": {
+      "fields": [
+        "/observation/0",
+        "/observation/1",
+        "/observation/2",
+        "/observation/3",
+        "/observation/4",
+        "/observation/5",
+        "/observation/6",
+        "/observation/7"
+      ],
+      "role": "p1",
+      "source": "plain-plain",
+      "target": "plain-rotate"
+    },
+    "rotate-plain-physical": {
+      "fields": [
+        "/observation/0",
+        "/observation/1",
+        "/observation/2",
+        "/observation/3",
+        "/observation/4",
+        "/observation/5",
+        "/observation/6",
+        "/observation/7"
+      ],
+      "role": "p1",
+      "source": "plain-plain",
+      "target": "rotate-plain"
+    },
+    "rotate-rotate-channel": {
+      "fields": [
+        "/observation/8",
+        "/observation/9",
+        "/observation/10"
+      ],
+      "role": "p1",
+      "source": "plain-plain",
+      "target": "rotate-rotate"
+    },
+    "rotate-rotate-physical": {
+      "fields": [
+        "/observation/0",
+        "/observation/1",
+        "/observation/2",
+        "/observation/3",
+        "/observation/4",
+        "/observation/5",
+        "/observation/6",
+        "/observation/7"
+      ],
+      "role": "p1",
+      "source": "plain-plain",
+      "target": "rotate-rotate"
+    }
+  },
+  "criteria": [
+    {
+      "contrast": "plain-blind-physical",
+      "dimension": "accepted_action",
+      "id": "blind-moves-different",
+      "when": "different"
+    },
+    {
+      "contrast": "plain-blind-physical",
+      "dimension": "accepted_action",
+      "id": "blind-moves-equal",
+      "when": "equal"
+    },
+    {
+      "contrast": "plain-blind-physical",
+      "dimension": "selected_view",
+      "id": "blind-physical-different",
+      "when": "different"
+    },
+    {
+      "contrast": "plain-blind-physical",
+      "dimension": "selected_view",
+      "id": "blind-physical-equal",
+      "when": "equal"
+    },
+    {
+      "contrast": "plain-rotate-physical",
+      "dimension": "accepted_action",
+      "id": "cross-decoder-different",
+      "when": "different"
+    },
+    {
+      "contrast": "rotate-plain-physical",
+      "dimension": "accepted_action",
+      "id": "cross-encoder-different",
+      "when": "different"
+    },
+    {
+      "contrast": "rotate-rotate-physical",
+      "dimension": "accepted_action",
+      "id": "rotation-moves-equal",
+      "when": "equal"
+    },
+    {
+      "contrast": "rotate-rotate-physical",
+      "dimension": "selected_view",
+      "id": "rotation-physical-equal",
+      "when": "equal"
+    },
+    {
+      "contrast": "rotate-rotate-channel",
+      "dimension": "selected_view",
+      "id": "rotation-signal-different",
+      "when": "different"
+    }
+  ],
+  "schema": "seatlab.panel-matrix/v1"
+}

@@ -56,27 +56,27 @@ jq '.selection' panel.json
 The source build writes `worklist.json` and `candidate-matrix.json`. Keep their receipt pins separately. The worklist has one job per distinct case and arm, even if several criteria need it. It includes both arms for each measured comparison, including an opposite result. It has no command, credentials, source trial UUID or machine-specific path.
 
 ```sh
-mkdir -p candidate-input/jobs
-cp source/candidate-matrix.json candidate-input/matrix.json
+mkdir returned
 jq -c '.jobs[] | {id,case,arm,criteria}' source/worklist.json
 ```
 
-Give each job to one worker. Have it run a **new native world** for that case and arm. Put its 2 exported files in `candidate-input/jobs/<id>/`. A worker need not receive another worker's world. An empty worklist is not a passing result. A missing required folder is an error. To record an intentionally absent run, set its arm to `null` and preserve the changed input separately.
-
-The [hosted example](../.github/workflows/native-hanabi.yml) checks both handoff hashes before collecting independent workers. They are canonical JSON digests (`seatlab.tape.digest`), **not** checksums of the file including its newline. Your runner owns assignment, launch and retries. Keep the case, arm and contrast labels when using a different runner.
+Give each job to one worker. Have it run a **new native world** for that case and arm. Put its 2 exported files in `returned/<id>/`. Leave that folder absent if the worker returns nothing. A worker does not need another worker's world. Keep raw Harbor output elsewhere.
 
 ```sh
-seatlab study build-matrix candidate-input/matrix.json --out candidate > candidate-pin.json
-seatlab study recheck source/study.json candidate/study.json \
-  --design source/panel-design.json --candidate-design candidate/panel-design.json \
-  --expect-sha256 "$(jq -er .study_sha256 source-pin.json)" \
-  --expect-design-sha256 "$(jq -er .design_sha256 source-pin.json)" \
-  --expect-candidate-sha256 "$(jq -er .study_sha256 candidate-pin.json)" \
-  --expect-candidate-design-sha256 "$(jq -er .design_sha256 candidate-pin.json)"
+seatlab study collect-jobs source returned --receipt source-pin.json --out result
+jq '{status,jobs,recheck}' result/collection.json
 ```
+
+The collector checks the original study, design, worklist and candidate template against the source receipt. It does not modify the plan. It checks every returned recording, even one whose partner is missing. A malformed return, extra file, wrong native case, or reused trial UUID is invalid. It is never counted as missing. A known change takes precedence over missing evidence. The collection receipt keeps the source pins and each returned native UUID, including an unpaired return.
+
+The return folder is a **trusted scheduling label**, not proof of executable identity. The collector cannot detect two workers that secretly swap policies on the same case. For that claim, retain independently attested policy or container identities from your runner. Finish publishing a worker folder before running the collector.
+
+If 2 compatible teams return, the output also contains a sealed `candidate/` and `recheck.json`. If no comparison is possible, it writes only `collection.json`. Do not count that as a successful behavior test. An empty return folder is valid evidence that no jobs returned. A missing return root is an input error.
+
+For manual integrations, use `source/candidate-matrix.json` as the new input matrix. `worklist_sha256` and `candidate_matrix_sha256` are canonical JSON digests, not checksums of newline-terminated files. Your scheduler still owns assignment, launch and retries. The [hosted example](../.github/workflows/native-hanabi.yml) runs one stock world per independent worker.
 
 Archive the **original** source pins separately from future candidates. In CI, use those trusted values. Recomputing both source pins from an untrusted download does not establish trust. The study pin is a canonical digest, not a file checksum.
 
 Exit `0` means every selected entry is stable. Exit `1` means at least one changed. Exit `3` means an incomplete result without a known change. Exit `2` refuses invalid inputs and emits no report. A missing selected case is unknown. Nonselected cases receive no recheck result. Stable criteria do not prove identical play, a better team, or coverage of unmeasured behavior.
 
-[See a native OpenSpiel example](../examples/hanabi-panel/registration.md) or use the [CI gate](panel-recheck.md).
+[See a native OpenSpiel example](../examples/hanabi-panel/registration.md), [reproduce a dropped worker alongside a real policy change](../examples/panel-replication/worker-control.md), or use the [CI gate](panel-recheck.md).

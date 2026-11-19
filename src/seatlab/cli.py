@@ -31,6 +31,7 @@ from .team_alignment import team_align
 from .trajectory import role_trajectory
 from .viewwork import act
 from .windows import verify_windows
+from .worker_intake import collect_jobs
 
 
 def _policy_arguments(parser: argparse.ArgumentParser, policies: tuple[str, ...]) -> None:
@@ -64,7 +65,20 @@ def main(argv: Sequence[str] | None = None) -> int:
         "build-matrix", help="build a sealed panel from recorded cases and team arms"
     )
     matrix.add_argument("matrix", type=Path, help="declarative panel matrix (JSON)")
-    matrix.add_argument("--out", type=Path, required=True, help="new portable bundle directory")
+    matrix.add_argument(
+        "--out", type=Path, required=True, help="new portable bundle directory"
+    )
+    collect = study_commands.add_parser(
+        "collect-jobs", help="collect independent native workers and report missing results"
+    )
+    collect.add_argument("source", type=Path, help="original sealed matrix output directory")
+    collect.add_argument(
+        "returns", type=Path, help="folder of returned native job directories"
+    )
+    collect.add_argument(
+        "--receipt", type=Path, required=True, help="separately trusted source build receipt"
+    )
+    collect.add_argument("--out", type=Path, required=True, help="new collection directory")
     seal = study_commands.add_parser("seal", help="record file and analysis digests")
     seal.add_argument("recipe", type=Path)
     seal.add_argument(
@@ -280,6 +294,9 @@ def main(argv: Sequence[str] | None = None) -> int:
                 }
             elif args.study_action == "build-matrix":
                 result = build_matrix(args.matrix, args.out)
+            elif args.study_action == "collect-jobs":
+                result = collect_jobs(args.source, args.returns, args.receipt, args.out)
+                exit_code = recheck_exit_code(result)
             elif args.study_action == "recheck":
                 result = recheck_panel(
                     args.source,

@@ -1,0 +1,10 @@
+{
+  "candidate_matrix_sha256": "3b3638104923bb41ea7289f219efae009e444f04a1f1322992118705bbca139f",
+  "cases": 8,
+  "checks": 32,
+  "design_sha256": "6e46a22efecdea98366db2ddc132123bdb18b7e95dd06646e2d4f82a4934950a",
+  "native_trials": 32,
+  "schema": "seatlab.matrix-build/v1",
+  "study_sha256": "9b93b09d4d5d53ebe6c3aa185ff217f8a309cad628ddd0ea71570cea3648e51b",
+  "worklist_sha256": "6160278bb1ced9b2b18d770e7b4966d3f3b08398cfcf430d724da07dcb2ae327"
+}
