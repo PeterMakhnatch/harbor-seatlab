@@ -29,6 +29,7 @@ ASSETS = {
     "pettingzoo.html": ("v0.10.0", "81c9b8fb96ea50f52e3b296c3bba007e05ce58c02a7437b9bb468f8f2ab81ca3"),
     "policy-windows.html": ("v0.11.0", "e34f9e39a81b4fa100e1fc14b6ba8032d75d2754688534b875ff109f855155ce"),
     "speaker-listener.html": ("v0.11.0", "c18907668db9d4747ef113ade165f35f908ece07666b6a528bc5f2200ba67e31"),
+    "panel-recheck.html": ("v0.14.0", "8aa96ad4790383498a34f5f47291dd8515691328f6976fa234a99c2315c9dc25"),
     "observed-panel.html": ("v0.13.0", "df91798b311d79cd84a429b16031c7b9f48257c617121d688b04d7885daf0d75"),
     "holdout.html": ("v0.13.0", "b52efbd7594f53444ea50775cf89e95d3da1a476dacec11f27a0b014798f4056"),
     "role-trajectories.html": ("v0.12.0", "9d4270491a836cc855e0392d4e55166c687d649d63f390ece022cb33db4adec9"),

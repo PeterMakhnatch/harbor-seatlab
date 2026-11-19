@@ -42,11 +42,18 @@ report=$(seatlab study recheck src.json cand.json \
   --design src-design.json --candidate-design cand-design.json \
   --expect-sha256 "$SRC_PIN" --expect-candidate-sha256 "$CAND_PIN") || rc=$?
 case "$rc" in
-  0) echo "matched" ;;
-  1) echo "changed"; printf '%s\n' "$report" > recheck.json; exit 1 ;;
-  3) echo "incomplete: do not treat as pass"; printf '%s\n' "$report" > recheck.json; exit 1 ;;
-  *) echo "refused: no report" >&2; exit 2 ;;
+  0) expected=matched ;;
+  1) expected=changed ;;
+  3) expected=incomplete ;;
+  *) echo "no valid report" >&2; exit 2 ;;
 esac
+printf '%s' "$report" | python3 -c '
+import json, sys
+r = json.load(sys.stdin)
+sys.exit(0 if r["schema"] == "seatlab.panel-recheck/v1" and r["status"] == sys.argv[1] else 1)
+' "$expected" || { echo "no valid report" >&2; exit 2; }
+printf '%s\n' "$report" > recheck.json
+exit "$rc"
 ```
 
 This example also works when the outer shell uses `set -e`.

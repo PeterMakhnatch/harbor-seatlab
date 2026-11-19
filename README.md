@@ -4,7 +4,7 @@
 
 **[Open the live evidence gallery](https://petermakhnatch.github.io/harbor-seatlab/).** See why 4 Connect Four teams get the same payoff after different moves. Compare their decisions, then try the 200-case calendar study. No account or download is required. The [offline guide](docs/evidence.md) explains how to verify the underlying records.
 
-**[Try a real policy regression in 5 minutes](docs/measured-recheck.md).** All 10 Harbor trials complete after one listener rule changes. SeatLab flags 8 of 18 registered behavior checks. Independently repeating unchanged code on Linux flags none. Download the public tapes or [use the offline CI gate](actions/panel-recheck/action.yml).
+**[Reproduce a real policy regression with one download](docs/measured-recheck.md).** All 10 Harbor trials complete after one listener rule changes. SeatLab flags 8 of 18 registered behavior checks. Independently repeating unchanged code on Linux flags none. Try the [interactive field report](https://petermakhnatch.github.io/harbor-seatlab/panel-recheck.html) or [use the offline CI gate](actions/panel-recheck/action.yml).
 
 ## Try it on real decisions
 
