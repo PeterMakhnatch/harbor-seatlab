@@ -4,12 +4,68 @@ on:
   pull_request:
     paths:
       - '.github/workflows/native-hanabi.yml'
+      - 'examples/hanabi-panel/prepare.py'
+      - 'examples/hanabi-panel/export_native.py'
+      - 'examples/world-order/from-hanabi.py'
+      - 'src/seatlab/matrix*.py'
 permissions:
   contents: read
 jobs:
-  crossplay:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: '0.13.9'
+      - name: Install SeatLab
+        run: |
+          set -euo pipefail
+          uv venv --python 3.12 "$RUNNER_TEMP/analyst"
+          uv pip install --python "$RUNNER_TEMP/analyst/bin/python" .
+      - name: Rebuild the original v0.9.0 source and compare its pins
+        run: |
+          set -euo pipefail
+          py="$RUNNER_TEMP/analyst/bin/python"
+          cli="$RUNNER_TEMP/analyst/bin/seatlab"
+          ex=examples/hanabi-panel
+          bundle="$RUNNER_TEMP/source-bundle"
+          mkdir "$bundle"
+          curl --fail --silent --show-error --location \
+            https://github.com/PeterMakhnatch/harbor-seatlab/releases/download/v0.9.0/native-world-order.tar.gz \
+            --output "$RUNNER_TEMP/source.tar.gz"
+          "$py" "$ex/prepare.py" source "$RUNNER_TEMP/source.tar.gz" --out "$RUNNER_TEMP/inputs"
+          "$cli" study build-matrix "$RUNNER_TEMP/inputs/matrix.json" --out "$bundle/source" > "$bundle/source-receipt.json"
+          jq -e --slurpfile selection "$ex/source-selection.json" --slurpfile handoff "$ex/handoff-pins.json" '
+            .study_sha256 == $selection[0].study_sha256 and .design_sha256 == $selection[0].design_sha256 and
+            .worklist_sha256 == $handoff[0].worklist_sha256 and .candidate_matrix_sha256 == $handoff[0].candidate_matrix_sha256' "$bundle/source-receipt.json"
+      - id: matrix
+        name: Dispatch only the four worlds in the pinned worklist
+        run: |
+          wl="$RUNNER_TEMP/source-bundle/source/worklist.json"
+          jq -e '.selected_cases == ["d00"] and .unmeasured == [] and
+            [.jobs[].id] == ["d00.ll","d00.lr","d00.rl","d00.rr"]' "$wl"
+          printf 'matrix=%s\n' "$(jq -c '{include:[.jobs[]|{job:.id,case:.case,arm:.arm}]}' "$wl")" >> "$GITHUB_OUTPUT"
+      - name: Publish the source bundle and receipt
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: native-hanabi-source
+          path: ${{ runner.temp }}/source-bundle/
+          if-no-files-found: error
+          retention-days: 7
+
+  native:
+    needs: source
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.source.outputs.matrix) }}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
@@ -31,25 +87,135 @@ jobs:
           version: '0.13.9'
       - name: Install stock Harbor and separate analysis tools
         run: |
+          set -euo pipefail
           uv sync --project stock-olam --locked --no-dev --python 3.12
           uv venv --python 3.12 "$RUNNER_TEMP/analyst"
           uv pip install --python "$RUNNER_TEMP/analyst/bin/python" . 'PyYAML==6.0.3'
-      - name: Run each registered team in its own native world
+      - name: Run this one team in its own native world
+        env:
+          JOB: ${{ matrix.job }}
+          CASE: ${{ matrix.case }}
+          ARM: ${{ matrix.arm }}
         run: |
+          set -euo pipefail
+          # Only the fixed Hanabi case and arms are accepted; nothing from the matrix is evaluated.
+          test "$CASE" = d00
+          case "$ARM" in ll | lr | rl | rr) ;; *) echo "unexpected arm" >&2; exit 2 ;; esac
+          test "$JOB" = "$CASE.$ARM"
+          team="${ARM^^}"
           d="$PWD/game-source/adapters/hanabi-crossplay"
           root="$RUNNER_TEMP/deck-zero"
           py="$RUNNER_TEMP/analyst/bin/python"
           curl -fsSL https://github.com/PeterMakhnatch/harbor-seatlab/releases/download/v0.8.0/hanabi-predictions-64.json -o "$RUNNER_TEMP/forecasts.json"
           echo '9302b9818793a5dbd8efaf5e300684395ec13d7495d84ab4e33c93f8432f91f9  forecasts.json' | (cd "$RUNNER_TEMP" && sha256sum -c -)
           "$py" "$d/study.py" prepare "$root" --decks 1
-          "$py" "$d/run_deck.py" "$root" 0 --harbor "$PWD/stock-olam/.venv/bin/harbor"
+          config="$root/configs/$CASE-$team.json"
+          test -f "$config"
+          # One world, no retry. The other three registered teams stay unattempted here.
+          "$PWD/stock-olam/.venv/bin/harbor" trial start -c "$config"
           mkdir "$RUNNER_TEMP/public-result"
-          "$py" "$d/collect.py" "$root" "$RUNNER_TEMP/forecasts.json" --episodes "$RUNNER_TEMP/public-result/episodes" > "$RUNNER_TEMP/public-result/report.json"
-          jq -e '.counts.registered == 4 and .counts.matched == 4 and .counts.duplicate_uuids == 0 and .episodes.episode_count == 8' "$RUNNER_TEMP/public-result/report.json"
-      - name: Retain only the projected receipts and native result summary
+          "$py" "$d/collect.py" "$root" "$RUNNER_TEMP/forecasts.json" \
+            --episodes "$RUNNER_TEMP/public-result/episodes" > "$RUNNER_TEMP/public-result/report.json"
+          jq -e --arg team "$team" '
+            .counts.registered == 4 and .counts.valid == 1 and .counts.unattempted == 3 and
+            .counts.matched == 1 and .counts.duplicate_uuids == 0 and
+            .episodes.episode_count == 2 and
+            ([.cells[] | select(.status == "matched")] | length) == 1 and
+            any(.cells[]; .deck_id == 0 and .pairing == $team and .status == "matched")' \
+            "$RUNNER_TEMP/public-result/report.json"
+          # Reconcile each world event with the exported role receipt before upload.
+          pub="$RUNNER_TEMP/public-result"
+          "$py" examples/hanabi-panel/export_native.py "$RUNNER_TEMP/deck-zero" "$pub/report.json" \
+            "$pub/episodes/episodes.jsonl" --out "$RUNNER_TEMP/world-order"
+          mkdir "$RUNNER_TEMP/job-evidence"
+          cp "$RUNNER_TEMP/world-order/$CASE-$team.jsonl" "$RUNNER_TEMP/job-evidence/episodes.jsonl"
+          cp "$RUNNER_TEMP/world-order/$CASE-$team.order.json" "$RUNNER_TEMP/job-evidence/order.json"
+      - name: Upload only the flat evidence for this one job
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: independent-hanabi-deck-zero
-          path: ${{ runner.temp }}/public-result/
+          name: job-${{ matrix.job }}
+          path: |
+            ${{ runner.temp }}/job-evidence/episodes.jsonl
+            ${{ runner.temp }}/job-evidence/order.json
+          if-no-files-found: error
+          retention-days: 7
+
+  compare:
+    needs: [source, native]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: '0.13.9'
+      - name: Install SeatLab
+        run: |
+          set -euo pipefail
+          uv venv --python 3.12 "$RUNNER_TEMP/analyst"
+          uv pip install --python "$RUNNER_TEMP/analyst/bin/python" .
+      - name: Download the source bundle into its own folder
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: native-hanabi-source
+          path: ${{ runner.temp }}/source-download
+      - name: Download each job artifact into its own folder, not merged
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: job-*
+          merge-multiple: false
+          path: ${{ runner.temp }}/job-download
+      - name: Build the candidate input from the trusted worklist
+        run: |
+          set -euo pipefail
+          src="$RUNNER_TEMP/source-download"
+          cand="$RUNNER_TEMP/candidate-input"
+          export SRC="$src/source"
+          "$RUNNER_TEMP/analyst/bin/python" - <<'PY'
+          import json, os
+          from pathlib import Path
+          from seatlab.study_inputs import read_document
+          from seatlab.tape import digest
+          root = Path(os.environ["SRC"])
+          pins = json.loads(Path("examples/hanabi-panel/handoff-pins.json").read_bytes())
+          for file, key in (("worklist.json", "worklist_sha256"), ("candidate-matrix.json", "candidate_matrix_sha256")):
+              if digest(read_document(root / file)) != pins[key]:
+                  raise SystemExit(f"wrong public pin for {file}")
+          PY
+          mkdir "$cand" "$cand/jobs"
+          cp "$src/source/candidate-matrix.json" "$cand/matrix.json"
+          jq -r '.jobs[].id' "$src/source/worklist.json" | while IFS= read -r id; do
+            case "$id" in d00.ll | d00.lr | d00.rl | d00.rr) ;; *) echo "unexpected job" >&2; exit 2 ;; esac
+            from="$RUNNER_TEMP/job-download/job-$id"
+            listing=$(find "$from" -mindepth 1 -printf '%y %P\n' | sort)
+            test "$listing" = "$(printf 'f episodes.jsonl\nf order.json')"
+            mkdir "$cand/jobs/$id"
+            cp "$from/episodes.jsonl" "$from/order.json" "$cand/jobs/$id/"
+          done
+      - name: Build the candidate and recheck all eight selected entries
+        run: |
+          set -euo pipefail
+          ex=examples/hanabi-panel
+          cli="$RUNNER_TEMP/analyst/bin/seatlab"
+          src="$RUNNER_TEMP/source-download"
+          res="$RUNNER_TEMP/native-result"
+          mkdir "$res"
+          "$cli" study build-matrix "$RUNNER_TEMP/candidate-input/matrix.json" --out "$res/candidate" > "$res/candidate-receipt.json"
+          "$cli" study recheck "$src/source/study.json" "$res/candidate/study.json" \
+            --design "$src/source/panel-design.json" --candidate-design "$res/candidate/panel-design.json" \
+            --expect-sha256 "$(jq -er .study_sha256 "$ex/source-selection.json")" \
+            --expect-design-sha256 "$(jq -er .design_sha256 "$ex/source-selection.json")" \
+            --expect-candidate-sha256 "$(jq -er .study_sha256 "$res/candidate-receipt.json")" \
+            --expect-candidate-design-sha256 "$(jq -er .design_sha256 "$res/candidate-receipt.json")" > "$res/recheck.json"
+          jq -e '.status == "matched" and .selection == ["d00"] and
+            .counts == {entries: 8, stable: 8, changed: 0, unknown: 0}' "$res/recheck.json"
+      - name: Retain the sanitized result and complete candidate
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: native-hanabi-candidate-result
+          path: ${{ runner.temp }}/native-result/
           if-no-files-found: error
           retention-days: 7

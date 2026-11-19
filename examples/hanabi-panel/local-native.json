@@ -1,0 +1,73 @@
+{
+  "cells": [
+    {
+      "decisions": 55,
+      "deck_id": 0,
+      "deck_sha256": "54e2a0f0d5306169da6886abad5e16bfe2f04ae0f4eec7e6b91dab644d29f22c",
+      "history_sha256": "d22d98be9c68ce0cc50af6d9c001e55c89f2509eb1ca1c56ff70d4e2997d1394",
+      "native_trial_id": "8bf2ba74-f176-42b5-bd46-2da4ae956408",
+      "pairing": "LL",
+      "reward": 0.0,
+      "scores": [
+        0,
+        0
+      ],
+      "status": "matched"
+    },
+    {
+      "decisions": 26,
+      "deck_id": 0,
+      "deck_sha256": "54e2a0f0d5306169da6886abad5e16bfe2f04ae0f4eec7e6b91dab644d29f22c",
+      "history_sha256": "cbdc3eff9d4311c3bdb0677c97c30ac382e9e110a58dffe23a794670baf685df",
+      "native_trial_id": "15a55fee-ecbf-4946-9389-bea51a036fbd",
+      "pairing": "LR",
+      "reward": 0.0,
+      "scores": [
+        0,
+        0
+      ],
+      "status": "matched"
+    },
+    {
+      "decisions": 16,
+      "deck_id": 0,
+      "deck_sha256": "54e2a0f0d5306169da6886abad5e16bfe2f04ae0f4eec7e6b91dab644d29f22c",
+      "history_sha256": "73775ff4dd8ea67bdf9f50c555a49352f9c1e3f337718a9af6229fb1cfa62141",
+      "native_trial_id": "e3687224-f0fd-4bea-b54a-fe416b6b8743",
+      "pairing": "RL",
+      "reward": 0.0,
+      "scores": [
+        0,
+        0
+      ],
+      "status": "matched"
+    },
+    {
+      "decisions": 42,
+      "deck_id": 0,
+      "deck_sha256": "54e2a0f0d5306169da6886abad5e16bfe2f04ae0f4eec7e6b91dab644d29f22c",
+      "history_sha256": "6e2c1b781e5d42ddf28bc9e01a3cdf44f5bb02434330a1e0e91febe242f45257",
+      "native_trial_id": "84670d85-f634-408c-b756-3e582aa2a4bf",
+      "pairing": "RR",
+      "reward": 0.0,
+      "scores": [
+        0,
+        0
+      ],
+      "status": "matched"
+    }
+  ],
+  "collector_counts": {
+    "duplicate_uuids": 0,
+    "failed": 0,
+    "incomplete": 0,
+    "invalid": 0,
+    "matched": 4,
+    "registered": 4,
+    "unattempted": 0,
+    "valid": 4,
+    "valid_prediction_differs": 0
+  },
+  "registered_worlds": 4,
+  "schema": "seatlab.hanabi-native-repeat/v1"
+}
