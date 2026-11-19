@@ -3,14 +3,13 @@
 from __future__ import annotations
 
 import re
-from hashlib import sha256
 from pathlib import Path
 from typing import TypedDict, cast
 from uuid import UUID
 
-from . import replay as engine
 from . import tape as wire
 from .context import ContextSpec
+from .verification import action_equal, verify_calibration_result
 
 __all__ = ["calibrate"]
 
@@ -146,105 +145,6 @@ def _get_decision(side: _Side, decisions: dict[str, wire.Decision]) -> wire.Deci
     return row
 
 
-def _action_equal(left: wire.Action, right: wire.Action) -> bool:
-    return type(left) is type(right) and left == right
-
-
-def _check_input(
-    row: wire.Decision,
-    prediction: wire.Result,
-    target: wire.Decision | None,
-    context: ContextSpec | None,
-) -> tuple[dict[str, object] | None, str]:
-    transform = prediction["transform"]
-    claimed = prediction["input_sha256"]
-    key = row["key"]
-    if transform == "identity":
-        view = row["view"]
-        if prediction["input_bytes"] != len(wire.canonical(view)):
-            raise wire.TapeError(f"replay input byte count does not match {key!r}")
-        return view, "derived"
-    if transform == "latest" or context is not None:
-        if transform != "latest" and (context is None or transform != context.identifier):
-            raise wire.TapeError(f"replay context identifier does not match {key!r}")
-        try:
-            if transform == "latest":
-                view = engine._transform(row["view"], transform)
-            else:
-                assert context is not None
-                view = context.apply(row["view"])
-        except ValueError as exc:
-            raise wire.TapeError(f"cannot derive replay input for {key!r}") from exc
-        data = wire.canonical(view)
-        if claimed != sha256(data).hexdigest() or prediction["input_bytes"] != len(data):
-            raise wire.TapeError(f"replay input commitment does not match {key!r}")
-        return view, "derived"
-    if claimed == row["view_sha256"]:
-        view = row["view"]
-    elif target is not None and claimed == target["view_sha256"]:
-        view = target["view"]
-    else:
-        # A context identifier commits to a spec but does not include its operations.
-        return None, "unavailable"
-    if prediction["input_bytes"] != len(wire.canonical(view)):
-        raise wire.TapeError(f"replay input byte count does not match {key!r}")
-    return view, "known_view"
-
-
-def _check_prediction(
-    row: wire.Decision,
-    receipt: _Side,
-    prediction: wire.Result,
-    target: wire.Decision | None,
-    context: ContextSpec | None,
-) -> str:
-    key = row["key"]
-    basis = row["basis"]
-    if basis == "bound" and prediction["transform"] != "identity":
-        basis = "reconstructed"
-    if (
-        prediction["role"] != row["role"]
-        or prediction["native_trial_id"] != row["native_trial_id"]
-        or prediction["basis"] != basis
-        or prediction["source_view_sha256"] != row["view_sha256"]
-        or prediction["source_decision_sha256"] != receipt["decision_sha256"]
-    ):
-        raise wire.TapeError(f"replay source does not match tape decision {key!r}")
-
-    measured = prediction["status"] == "measured"
-    if measured:
-        try:
-            expected_score = wire.score(row, prediction["action"])
-        except wire.UnknownActionError as exc:
-            raise wire.TapeError(f"replay claims an unscorable action for {key!r}") from exc
-        if prediction["score"] != expected_score:
-            raise wire.TapeError(f"replay score does not match offline answers for {key!r}")
-
-    view, input_verification = _check_input(row, prediction, target, context)
-    policy = prediction["policy"]
-    if view is None or policy in ("observed", "external"):
-        return input_verification
-    try:
-        if policy == "intersection":
-            action = engine._intersection(view)
-        else:  # The result validator limits the other policies to arrival and revision.
-            action = engine._handoff_action(view, policy)
-    except ValueError as exc:
-        raise wire.TapeError(f"replay policy cannot use committed input for {key!r}") from exc
-    if measured:
-        if not _action_equal(action, prediction["action"]):
-            raise wire.TapeError(
-                f"replay action does not match deterministic policy for {key!r}"
-            )
-    else:
-        try:
-            wire.score(row, action)
-        except wire.UnknownActionError:
-            return input_verification
-        raise wire.TapeError(f"replay omits a deterministic measurement for {key!r}")
-    return input_verification
-
-
 def _arm_report(side: _Side, row: wire.Decision | None) -> dict[str, object]:
     return {
         **side,
@@ -279,7 +179,7 @@ def _evaluate(
     target_observed = target["observed"] if target is not None else None
     native_action_changed = None
     if source_observed is not None and target_observed is not None:
-        native_action_changed = not _action_equal(
+        native_action_changed = not action_equal(
             source_observed["action"], target_observed["action"]
         )
         counts["native_action_compared"] += 1
@@ -295,8 +195,11 @@ def _evaluate(
     prediction_report = None
     opaque = False
     if prediction is not None:
-        assert source is not None
-        verification = _check_prediction(source, pair["source"], prediction, target, context)
+        source_digest = pair["source"]["decision_sha256"]
+        assert source is not None and source_digest is not None
+        verification = verify_calibration_result(
+            source, prediction, source_digest, target, context
+        )
         prediction_report = {**prediction, "input_verification": verification}
         counts[f"prediction_{prediction['status']}"] += 1
         if prediction["status"] == "unmeasured":
@@ -322,7 +225,7 @@ def _evaluate(
         and target_score is not None
     ):
         input_match = prediction["input_sha256"] == target["view_sha256"]
-        action_match = _action_equal(prediction["action"], target_observed["action"])
+        action_match = action_equal(prediction["action"], target_observed["action"])
         score_match = prediction["score"] == target_score
     reproduced = False
     if source is None or target is None:

@@ -13,6 +13,8 @@ from .calibration import calibrate
 from .context import ContextSpec
 from .handoff import from_handoff
 from .inspector import write_inspector
+from .merge import merge
+from .partition import partition
 from .prefix import prefix
 from .replay import replay
 from .report import compare, describe
@@ -30,6 +32,14 @@ def _policy_arguments(parser: argparse.ArgumentParser, policies: tuple[str, ...]
     )
 
 
+def _transform_arguments(parser: argparse.ArgumentParser) -> None:
+    transforms = parser.add_mutually_exclusive_group()
+    transforms.add_argument("--transform", choices=("identity", "latest"), default="identity")
+    transforms.add_argument(
+        "--transform-file", type=Path, help="declarative context intervention (JSON)"
+    )
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="seatlab", description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
@@ -44,12 +54,28 @@ def main(argv: Sequence[str] | None = None) -> int:
     run = commands.add_parser("replay", help="apply a policy to every decision in a tape")
     run.add_argument("tape", type=Path)
     run.add_argument("--out", required=True, type=Path, help="new result file (JSONL)")
-    transforms = run.add_mutually_exclusive_group()
-    transforms.add_argument("--transform", choices=("identity", "latest"), default="identity")
-    transforms.add_argument(
-        "--transform-file", type=Path, help="declarative context intervention (JSON)"
-    )
+    _transform_arguments(run)
     _policy_arguments(run, ("observed", "revision", "arrival", "intersection"))
+    split = commands.add_parser(
+        "partition", help="register a source tape and produce disjoint worker inputs"
+    )
+    split.add_argument("tape", type=Path)
+    split.add_argument("--shards", type=int, required=True)
+    split.add_argument("--out", type=Path, required=True, help="new partition directory")
+    split.add_argument(
+        "--policy",
+        choices=("observed", "revision", "arrival", "intersection", "external"),
+        required=True,
+    )
+    _transform_arguments(split)
+    gather = commands.add_parser(
+        "merge",
+        help="verify worker ledgers against the registered tape and publish in source order",
+    )
+    gather.add_argument("--plan", type=Path, required=True)
+    gather.add_argument("--tape", type=Path, required=True)
+    gather.add_argument("--out", type=Path, required=True, help="new merged ledger")
+    gather.add_argument("ledgers", type=Path, nargs="*", help="worker result JSONL files")
     sequence = commands.add_parser(
         "prefix", help="compare a policy only while a recorded role history still applies"
     )
@@ -97,11 +123,25 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--html", type=Path, help="also write a new, self-contained HTML report"
     )
     args = parser.parse_args(argv)
+    exit_code = 0
     try:
         if args.command == "from-handoff":
             result = from_handoff(args.bundle, args.panel, args.out)
         elif args.command == "describe":
             result = describe(args.tape)
+        elif args.command == "partition":
+            result = partition(
+                args.tape,
+                args.out,
+                args.shards,
+                args.policy,
+                transform=args.transform,
+                transform_file=args.transform_file,
+            )
+        elif args.command == "merge":
+            result = merge(args.plan, args.tape, args.ledgers, args.out)
+            if not result["complete"]:
+                exit_code = 1
         elif args.command == "compare":
             result = compare(args.baseline, args.candidate)
         elif args.command == "align":
@@ -137,4 +177,4 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"seatlab: {error}", file=sys.stderr)
         return 2
     print(json.dumps(result, sort_keys=True, indent=2, allow_nan=False))
-    return 0
+    return exit_code
