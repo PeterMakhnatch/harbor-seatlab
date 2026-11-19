@@ -85,6 +85,8 @@ The [receipt board](examples/receipt-board/) is a complete 2-seat Olam task. Run
 
 Run `seatlab study verify study.json --expect-sha256 "$STUDY_SHA256" --html report.html`. It checks the input bytes, recomputes every registered report and writes an offline summary you can open in a browser. It runs no code from the study. The [portable study guide](docs/portable-studies.md) shows how to publish one. A verified report can still contain a failed policy or missing evidence.
 
+For continuous integration, use the [pinned GitHub Action](docs/github-action.md). It verifies the same study from another repository. The consumer example tests a valid pin and an expected refusal against the same real Harbor job.
+
 Use [`seatlab study relations`](docs/study-relations.md) to join those comparisons to Eval Lab by native trial UUID. The [measured job example](examples/eval-lab/measured.md) keeps 4 role executions separate from 2 shared rewards. It needs no game rerun.
 
 ## What belongs where
