@@ -6,6 +6,7 @@ from pathlib import Path
 from . import tape as wire
 from .partition import iter_source, load_plan
 from .verification import verify_worker_result
+from .viewmerge import merge_actions
 
 
 def merge(
@@ -13,6 +14,8 @@ def merge(
 ) -> dict[str, object]:
     """Publish a complete ledger without attesting authorship or external execution."""
     plan = load_plan(plan_path)
+    if plan.namespace is not None:
+        return merge_actions(plan, tape, ledgers, out)
     first_by_key: dict[str, wire.Result] = {}
     # A repeated key has an entry even when all its rows equal the first row.
     alternatives: dict[str, list[wire.Result]] = {}
