@@ -30,7 +30,7 @@ Split by case before running the command. A native UUID or case digest in both i
 
 Report `matched`, `disagreed`, `tied`, and `unseen` against the eligible held-out denominator. Low coverage means the observations do not repeat across the split. It does not mean another algorithm cannot generalize. These are comparisons to **recorded actions**, not meeting feasibility, team reward, causation, or model quality. Use `prefix` and a new native trial to test what actually changes when an acting policy uses less context.
 
-In the [registered calendar study](https://github.com/PeterMakhnatch/harbor-multiagent/blob/11dc5bfe54/adapters/masbench-scheduling/context-audit-results.md), the fit set contains 321 decisions. All 321 full views are different. The replies-only representation also has 0 fit conflicts, but its only 8 held-out matches are initial requests. It does not predict a single held-out response to actual replies. An independent SQL implementation reproduces every count. Use this distinction before spending on a smaller live prompt.
+In the [registered calendar study](https://github.com/PeterMakhnatch/harbor-multiagent/blob/11dc5bfe547d75951ca0d8a28454be712fbc6b9a/adapters/masbench-scheduling/context-audit-results.md), the fit set contains 321 decisions. All 321 full views are different. The replies-only representation also has 0 fit conflicts, but its only 8 held-out matches are initial requests. It does not predict a single held-out response to actual replies. An independent SQL implementation reproduces every count. Use this distinction before spending on a smaller live prompt.
 
 ## Privacy and reproducibility
 

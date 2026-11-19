@@ -61,3 +61,7 @@ jobs:
           seatlab replay "$tape" --policy intersection --transform-file examples/meeting-first8.json \
             --out "$out/serial.jsonl"
           cmp "$out/merged.jsonl" "$out/serial.jsonl"
+      - name: Measure lost context on acknowledged coordinator inputs
+        run: |
+          seatlab context-audit examples/cursor-source.jsonl --field /round |
+            jq -e '.fit.counts.eligible == 29 and .fit.additional_minimum_errors == 4 and .fit.full.minimum_errors == 0'

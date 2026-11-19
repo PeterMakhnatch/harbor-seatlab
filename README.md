@@ -67,6 +67,10 @@ Write one `{"action": ...}` JSON object to stdout. SeatLab records an unmeasured
 
 Run `seatlab context-audit examples/cursor-source.jsonl --field /round`. Keeping only the round number makes at least 4 of the 29 recorded actions impossible to reproduce with a deterministic, memoryless policy. The full views have no contradictions, but none repeat. That is not proof of generalization. Supply `--heldout OTHER.jsonl` to measure matches, disagreements, unseen inputs, and ties on different native cases. The [context audit guide](docs/context-audit.md) explains the bound and when to run a new native trial.
 
+## Give independent workers separate cases
+
+Use `seatlab partition` before starting workers. Each worker gets its own decision tape and runs the existing `replay` command. Use `seatlab merge` to check the returned rows against the registered input. A missing, repeated, or incompatible row prevents publication. The complete ledger uses source order, not worker completion order. See the [2-worker example](docs/parallel-replay.md).
+
 ## What belongs where
 
 | Job | Owner |
