@@ -240,10 +240,57 @@ def _external(
     raise _PolicyFailure("invalid_action")
 
 
+def configure_policy(
+    policy: str | list[str], timeout: float, *, observed: bool = True
+) -> tuple[wire.Policy, tuple[str, ...]]:
+    """Validate timeout and policy selection, returning the policy name and exec argv."""
+    if (
+        isinstance(timeout, bool)
+        or not isinstance(timeout, (int, float))
+        or not 0 < timeout <= 300
+    ):
+        raise ValueError("timeout must be positive and at most 300 seconds")
+    if isinstance(policy, str):
+        if policy == "observed" and not observed:
+            raise ValueError("observed policy requires a source decision")
+        if policy not in _BUILTINS:
+            raise ValueError("unknown replay policy")
+        return cast(wire.Policy, policy), ()
+    if (
+        not isinstance(policy, list)
+        or not policy
+        or any(not isinstance(arg, str) or "\0" in arg for arg in policy)
+        or not os.path.isabs(policy[0])
+    ):
+        raise ValueError("external policy requires an absolute executable path")
+    if os.name != "posix":
+        raise ValueError("external replay requires a POSIX host")
+    return "external", tuple(policy)
+
+
+def choose_view(
+    view: dict[str, object],
+    name: wire.Policy,
+    argv: tuple[str, ...],
+    data: bytes,
+    timeout: float,
+) -> wire.Action:
+    """Choose an action from a role-local view alone; observed is not allowed here."""
+    if name == "observed":
+        raise ValueError("observed policy requires a source decision")
+    if name == "intersection":
+        return _intersection(view)
+    if name == "external":
+        return _external(argv, data, timeout)
+    if name in ("arrival", "revision"):
+        return _handoff_action(view, name)
+    raise ValueError("unknown replay policy")
+
+
 def _choose(
     row: wire.Decision,
     view: dict[str, object],
-    policy: str,
+    policy: wire.Policy,
     argv: tuple[str, ...],
     data: bytes,
     timeout: float,
@@ -252,11 +299,53 @@ def _choose(
         if row["observed"] is None:
             raise _PolicyFailure("missing_observation")
         return row["observed"]["action"]
-    if policy == "intersection":
-        return _intersection(view)
-    if policy == "external":
-        return _external(argv, data, timeout)
-    return _handoff_action(view, policy)
+    return choose_view(view, policy, argv, data, timeout)
+
+
+def scored_action(
+    source: wire.Decision,
+    name: wire.Policy,
+    transform_id: str,
+    data: bytes,
+    action: wire.Action,
+    error: wire.ReplayError | None,
+) -> wire.Result:
+    """Score one candidate action or failure against a validated source decision."""
+    result_action: wire.Action = None
+    result_score: wire.Score | None = None
+    result_error: wire.ReplayError | None = error
+    if result_error is None:
+        try:
+            result_score = wire.score(source, action)
+        except wire.UnknownActionError:
+            result_error = "invalid_action"
+        else:
+            result_action = action
+    elif action is not None:
+        raise ValueError("failed action cannot carry a non-null action")
+    status = "measured" if result_error is None else "unmeasured"
+    basis = source["basis"]
+    if basis == "bound" and transform_id != "identity":
+        basis = "reconstructed"
+    return wire.validate_result(
+        {
+            "schema": wire.RESULT_SCHEMA,
+            "key": source["key"],
+            "role": source["role"],
+            "native_trial_id": source["native_trial_id"],
+            "basis": basis,
+            "source_view_sha256": source["view_sha256"],
+            "source_decision_sha256": wire.decision_sha256(source),
+            "input_sha256": sha256(data).hexdigest(),
+            "input_bytes": len(data),
+            "policy": name,
+            "transform": transform_id,
+            "status": status,
+            "action": result_action,
+            "score": result_score,
+            "error": result_error,
+        }
+    )
 
 
 def replay(
@@ -280,37 +369,14 @@ def replay(
         transform_id = transform
     else:
         raise ValueError("unknown replay transform")
-    if (
-        isinstance(timeout, bool)
-        or not isinstance(timeout, (int, float))
-        or not 0 < timeout <= 300
-    ):
-        raise ValueError("timeout must be positive and at most 300 seconds")
-    argv: tuple[str, ...] = ()
-    if isinstance(policy, str):
-        if policy not in _BUILTINS:
-            raise ValueError("unknown replay policy")
-        if policy == "observed" and transform_id != "identity":
-            raise ValueError("observed requires the identity transform")
-        name = policy
-    else:
-        if (
-            not isinstance(policy, list)
-            or not policy
-            or any(not isinstance(arg, str) or "\0" in arg for arg in policy)
-            or not os.path.isabs(policy[0])
-        ):
-            raise ValueError("external policy requires an absolute executable path")
-        if os.name != "posix":
-            raise ValueError("external replay requires a POSIX host")
-        name = "external"
-        argv = tuple(policy)
+    name, argv = configure_policy(policy, timeout)
+    if name == "observed" and transform_id != "identity":
+        raise ValueError("observed requires the identity transform")
 
     summary = {"decisions": 0, "measured": 0, "unmeasured": 0}
 
     def results() -> Iterator[wire.Result]:
         for row in wire.read_tape(tape):
-            source_decision_sha256 = wire.decision_sha256(row)
             if context is None:
                 view = _transform(row["view"], transform_id)
             else:
@@ -320,42 +386,14 @@ def replay(
                     raise ValueError(f"context transform for {row['key']}: {exc}") from exc
             data = wire.canonical(view)
             action: wire.Action = None
-            result_score = None
-            error = None
+            error: wire.ReplayError | None = None
             try:
-                chosen = _choose(row, view, name, argv, data, timeout)
-                try:
-                    result_score = wire.score(row, chosen)
-                except wire.UnknownActionError:
-                    raise _PolicyFailure("invalid_action") from None
-                action = chosen
+                action = _choose(row, view, name, argv, data, timeout)
             except _PolicyFailure as failure:
                 error = failure.reason
-            status = "measured" if error is None else "unmeasured"
-            basis = row["basis"]
-            if basis == "bound" and transform_id != "identity":
-                basis = "reconstructed"
-            result = wire.validate_result(
-                {
-                    "schema": wire.RESULT_SCHEMA,
-                    "key": row["key"],
-                    "role": row["role"],
-                    "native_trial_id": row["native_trial_id"],
-                    "basis": basis,
-                    "source_view_sha256": row["view_sha256"],
-                    "source_decision_sha256": source_decision_sha256,
-                    "input_sha256": sha256(data).hexdigest(),
-                    "input_bytes": len(data),
-                    "policy": name,
-                    "transform": transform_id,
-                    "status": status,
-                    "action": action,
-                    "score": result_score,
-                    "error": error,
-                },
-            )
+            result = scored_action(row, name, transform_id, data, action, error)
             summary["decisions"] += 1
-            summary[status] += 1
+            summary[result["status"]] += 1
             yield result
 
     wire.write_lines(out, results())

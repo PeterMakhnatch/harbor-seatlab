@@ -18,6 +18,7 @@ from .partition import partition
 from .prefix import prefix
 from .replay import replay
 from .report import compare, describe
+from .viewwork import act
 
 
 def _policy_arguments(parser: argparse.ArgumentParser, policies: tuple[str, ...]) -> None:
@@ -68,6 +69,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         required=True,
     )
     _transform_arguments(split)
+    split.add_argument(
+        "--views-only",
+        metavar="NAMESPACE",
+        help="send only transformed actor views; use a distinct 32-character lowercase hex study ID",
+    )
+    worker = commands.add_parser("act", help="return unscored actions for a view-only part")
+    worker.add_argument("requests", type=Path)
+    worker.add_argument("--out", type=Path, required=True, help="new unscored action file")
+    _policy_arguments(worker, ("revision", "arrival", "intersection"))
     gather = commands.add_parser(
         "merge",
         help="verify worker ledgers against the registered tape and publish in source order",
@@ -137,6 +147,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 args.policy,
                 transform=args.transform,
                 transform_file=args.transform_file,
+                namespace=args.views_only,
             )
         elif args.command == "merge":
             result = merge(args.plan, args.tape, args.ledgers, args.out)
@@ -161,6 +172,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 result = prefix(
                     args.episodes, policy, history=args.history, timeout=args.timeout_seconds
                 )
+            elif args.command == "act":
+                result = act(args.requests, args.out, policy, timeout=args.timeout_seconds)
             else:
                 result = replay(
                     args.tape,
