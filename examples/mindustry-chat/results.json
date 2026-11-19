@@ -1,0 +1,85 @@
+{
+  "execution": {
+    "arms": {
+      "no-read": {
+        "evidence_exit_status": 0,
+        "evidence_present": true,
+        "evidence_timed_out": false,
+        "harbor_exit_status": 0,
+        "harbor_timed_out": false
+      },
+      "read": {
+        "evidence_exit_status": 0,
+        "evidence_present": true,
+        "evidence_timed_out": false,
+        "harbor_exit_status": 0,
+        "harbor_timed_out": false
+      }
+    },
+    "schema": "seatlab.mindustry-chat-summary/v1"
+  },
+  "harbor_commit": "4a194016336ccd1ce3fcc799b10158ca0375eb63",
+  "plan": {
+    "arms": [
+      "read",
+      "no-read"
+    ],
+    "attempt_timeout_seconds": 1080,
+    "cpu_override": true,
+    "granted_cpus": 4,
+    "participants": 2,
+    "retries": 0,
+    "schema": "seatlab.mindustry-chat-plan/v1"
+  },
+  "schema": "seatlab.mindustry-chat-measurement/v1",
+  "task_commit": "1374e46a229c73763a1e46f347f67676ff1b434b",
+  "trials": [
+    {
+      "arm": "read",
+      "evidence": {
+        "journal": "ok",
+        "receiver_receipt": "ok",
+        "result": "ok",
+        "sender_receipt": "ok"
+      },
+      "facts": {
+        "dependent_reply_accepted": true,
+        "recipient_explicit_read": true,
+        "sender_saw_ack": true,
+        "transmit_accepted": true
+      },
+      "native_reward": null,
+      "native_reward_disposition": "reward_withheld_not_valid",
+      "native_trial_id": "5d4b0628-5b9f-4867-b69d-2ee07dbeab01",
+      "notes": "no-read does not show the world withheld the message; a living core when the programs stop is not a score of zero",
+      "protocol_result": "established",
+      "reasons": [],
+      "schema": "seatlab.native-chat-evidence/v1",
+      "status": "complete"
+    },
+    {
+      "arm": "no-read",
+      "evidence": {
+        "journal": "ok",
+        "receiver_receipt": "ok",
+        "result": "ok",
+        "sender_receipt": "ok"
+      },
+      "facts": {
+        "dependent_reply_accepted": false,
+        "recipient_explicit_read": false,
+        "sender_saw_ack": false,
+        "transmit_accepted": true
+      },
+      "native_reward": null,
+      "native_reward_disposition": "reward_withheld_not_valid",
+      "native_trial_id": "875967f0-4867-4603-8708-fbff027b4b17",
+      "notes": "no-read does not show the world withheld the message; a living core when the programs stop is not a score of zero",
+      "protocol_result": "no_read_observed",
+      "reasons": [],
+      "schema": "seatlab.native-chat-evidence/v1",
+      "status": "complete"
+    }
+  ],
+  "workflow_run": "https://github.com/PeterMakhnatch/harbor-seatlab/actions/runs/44541369056"
+}
