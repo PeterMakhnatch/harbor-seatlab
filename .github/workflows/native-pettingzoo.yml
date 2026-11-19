@@ -1,0 +1,72 @@
+name: Replicate three native PettingZoo trials; payoff is not completion
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/native-pettingzoo.yml'
+      - 'examples/pettingzoo-replication/**'
+permissions:
+  contents: read
+jobs:
+  native:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          repository: olamlabs/harbor-multiagent
+          ref: 6aeb609e31fd77e5f89ce3bcb018db8045520fb7
+          path: stock-olam
+          persist-credentials: false
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          repository: PeterMakhnatch/harbor-multiagent
+          ref: 52ca9cf42fc2110a130ba84eb81b5ba5e65f6975
+          path: game-source
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: '0.13.9'
+      - name: Install stock Harbor and separate analysis tools
+        run: |
+          uv sync --project stock-olam --locked --no-dev --python 3.12
+          uv venv --python 3.12 "$RUNNER_TEMP/analyst"
+          uv pip install --python "$RUNNER_TEMP/analyst/bin/python" . \
+            -r game-source/adapters/pettingzoo-seats/presets/simple-spread-requirements.txt
+      - name: Run the three named cells once; payoff is not completion
+        run: |
+          set -euo pipefail
+          d="$PWD/game-source/adapters/pettingzoo-seats"
+          classic="$RUNNER_TEMP/classic"
+          particle="$RUNNER_TEMP/particle"
+          py="$RUNNER_TEMP/analyst/bin/python"
+          harbor="$PWD/stock-olam/.venv/bin/harbor"
+          # study.py run whitelists HOME PATH TMPDIR LANG LC_ALL DOCKER_HOST DOCKER_CONTEXT.
+          # Do not start Harbor from this action environment.
+          # prepare each suite once. This runner keeps the Docker layer cache.
+          "$py" "$d/study.py" prepare "$classic"
+          "$py" "$d/study.py" prepare "$particle" --suite particle
+          "$py" "$d/study.py" run "$classic" rps-copy-beat --harbor "$harbor"
+          "$py" "$d/study.py" run "$classic" connect-lh --harbor "$harbor"
+          "$py" "$d/study.py" run "$particle" spread-llh --harbor "$harbor"
+          "$py" examples/pettingzoo-replication/check.py native \
+            "$classic" "$particle" --adapter "$d" --out "$RUNNER_TEMP/public-result"
+          jq -e '
+            .payoff_is_not_completion == true and
+            [.cells[].id] == ["rps-copy-beat","connect-lh","spread-llh"] and
+            (.cells | map(.trial) | unique | length) == 3 and
+            .cells[0].group == "joint" and .cells[1].group == "alternating" and
+            .cells[2].group == "joint" and
+            all(.cells[]; .completion == 1 and (.returns|type=="object") and
+              (.steps | (type == "array" and length > 0)) and (.trial|type=="string"))
+          ' "$RUNNER_TEMP/public-result/receipt.json"
+      - name: Retain references and projections only
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: independent-pettingzoo-three
+          path: ${{ runner.temp }}/public-result/
+          if-no-files-found: error
+          retention-days: 7
