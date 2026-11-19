@@ -1,0 +1,24 @@
+{
+  "schema": "seatlab.identity-watch-example/v1",
+  "workers": {
+    "incoming-sync": {
+      "baseline": "uuid_mismatch",
+      "candidate": "pass",
+      "proposal_sha": "0e2b6a1289681996a691bbecec4448eaada083e8",
+      "prospective_tree": "7a225c830a6202bb454621c46960fe897528529e",
+      "schema": "seatlab.native-identity-watch/v1",
+      "status": "patch_fixes",
+      "upstream_sha": "76a1d848057d775a05b41d8d51235768d77eaee9"
+    },
+    "main": {
+      "baseline": "uuid_mismatch",
+      "candidate": "pass",
+      "proposal_sha": "0e2b6a1289681996a691bbecec4448eaada083e8",
+      "prospective_tree": "64bf2d8e7f8cc9dee88ad528396e034b7e130cbe",
+      "schema": "seatlab.native-identity-watch/v1",
+      "status": "patch_fixes",
+      "upstream_sha": "6aeb609e31fd77e5f89ce3bcb018db8045520fb7"
+    }
+  },
+  "workflow_run": "https://github.com/PeterMakhnatch/harbor-seatlab/actions/runs/44572435919"
+}

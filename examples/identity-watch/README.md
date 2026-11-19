@@ -20,3 +20,7 @@ The planner resolves immutable Git revisions. Each standard public Linux worker 
 There are 7 scheduled dates: November 20–26, 2026, at 10:37 AM ET. Public GitHub schedules can start late. No test runs if the personal PR closes, its head changes, or the scheduled date is outside this window. Manual runs can bypass the date but not the ownership and revision checks. The schedule does not run models, Docker worlds, or paid cloud services. At most 2 test workers run per eligible day. Each has a 10-minute timeout.
 
 Disable it immediately with `gh workflow disable reserved-id-watch.yml --repo PeterMakhnatch/harbor-seatlab`. The existing [real Docker trial](https://github.com/PeterMakhnatch/harbor-multiagent/pull/6) and [prospective sync result](https://github.com/PeterMakhnatch/harbor-multiagent/pull/6#issuecomment-7015964221) remain available after the watch ends.
+
+## First hosted observations
+
+Both official `main` (`6aeb609`) and the pending sync (`76a1d84`) returned the wrong native UUID. Both prospective integrations passed. The sync worker produced the same Git tree and the same compact receipt as the independent local check. These are 2 distinct source revisions, not 2 Docker runs. [Public Linux run](https://github.com/PeterMakhnatch/harbor-seatlab/actions/runs/44572435919) · [Permanent worker receipts](first-run.json).
