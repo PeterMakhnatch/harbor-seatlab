@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import cast
+from typing import NamedTuple, cast
 
 from . import tape as wire
 from .panel_cover import minimum_panel
@@ -187,20 +187,46 @@ def _identity(report: dict[str, object]) -> tuple[str, list[str]]:
     return cast(str, digest), ids
 
 
-def panel_report(manifest: Path, design: Path, *, expect_sha256: str) -> dict[str, object]:
-    """Verify a pinned study and choose the fewest cases witnessing every criterion."""
+class _Assessment(NamedTuple):
+    criteria: list[dict[str, object]]
+    rows: dict[str, dict[str, str | None]]
+    endpoints: dict[str, tuple[str, str, str, str]]
+    native_ids: set[str]
+    report: dict[str, object]
+
+
+def _assess_design(
+    manifest: Path,
+    design: Path,
+    *,
+    expect_sha256: str,
+    select_cases: bool,
+    expect_design_sha256: str | None = None,
+) -> _Assessment:
+    """Read one design snapshot, verify the native evidence, and optionally choose cases."""
     if not valid_sha256(expect_sha256):
         raise wire.TapeError("panel requires a lowercase SHA-256 study pin")
     raw_design = read_document(design)
     criteria, cases = _parse_design(raw_design)
     design_sha256 = wire.digest(raw_design)
 
+    if expect_design_sha256 is not None and design_sha256 != expect_design_sha256:
+        raise wire.TapeError("panel design does not match its expected digest")
+    endpoints: dict[str, tuple[str, str, str, str]] = {}
+    native_ids: set[str] = set()
     seen: dict[str, dict[str, object]] = {}
 
     def collect(check: Check, report: dict[str, object], _digest: str) -> None:
         if check["kind"] != "role-trajectory":
             return
         digest, trial_ids = _identity(report)
+        endpoints[check["id"]] = (
+            check["source"],
+            check["source_order"],
+            check["target"],
+            check["target_order"],
+        )
+        native_ids.update(trial_ids)
         fields = report["fields"]
         seen[check["id"]] = {
             "role": check["role"],
@@ -291,7 +317,7 @@ def panel_report(manifest: Path, design: Path, *, expect_sha256: str) -> dict[st
         for name in cases
     }
     targets = sorted(cid for cid in ids if any(cid in found for found in witnessed.values()))
-    selected = list(minimum_panel(witnessed))
+    selected = list(minimum_panel(witnessed)) if select_cases else []
 
     criterion_rows: list[dict[str, object]] = []
     for cid in ids:
@@ -309,7 +335,7 @@ def panel_report(manifest: Path, design: Path, *, expect_sha256: str) -> dict[st
             }
         )
 
-    return {
+    report: dict[str, object] = {
         "schema": PANEL_SCHEMA,
         "study_sha256": summary["study_sha256"],
         "design_sha256": design_sha256,
@@ -333,3 +359,11 @@ def panel_report(manifest: Path, design: Path, *, expect_sha256: str) -> dict[st
             for name in cases
         ],
     }
+    return _Assessment(criteria, cases, endpoints, native_ids, report)
+
+
+def panel_report(manifest: Path, design: Path, *, expect_sha256: str) -> dict[str, object]:
+    """Verify a pinned study and choose the fewest cases witnessing every criterion."""
+    return _assess_design(
+        manifest, design, expect_sha256=expect_sha256, select_cases=True
+    ).report

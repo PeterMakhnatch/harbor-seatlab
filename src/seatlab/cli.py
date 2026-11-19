@@ -18,6 +18,7 @@ from .panel import panel_report
 from .panel_html import write_panel_html
 from .partition import partition
 from .prefix import prefix
+from .recheck import recheck_exit_code, recheck_panel
 from .replay import replay
 from .report import compare, describe
 from .study import StudyMismatch, seal_study, verify_study
@@ -83,9 +84,33 @@ def main(argv: Sequence[str] | None = None) -> int:
         "panel", help="find a smallest case set that covers the recorded behavior criteria"
     )
     panel.add_argument("manifest", type=Path)
-    panel.add_argument("--expect-sha256", required=True, help="trusted canonical manifest digest")
-    panel.add_argument("--design", type=Path, required=True, help="explicit case and criterion map")
-    panel.add_argument("--html", type=Path, help="also write a new, self-contained panel page")
+    panel.add_argument(
+        "--expect-sha256", required=True, help="trusted canonical manifest digest"
+    )
+    panel.add_argument(
+        "--design", type=Path, required=True, help="explicit case and criterion map"
+    )
+    panel.add_argument(
+        "--html", type=Path, help="also write a new, self-contained panel page"
+    )
+    recheck = study_commands.add_parser(
+        "recheck",
+        help="compare the frozen source panel against independently collected cases",
+    )
+    recheck.add_argument("source", type=Path)
+    recheck.add_argument("candidate", type=Path)
+    recheck.add_argument("--design", required=True, type=Path, help="source panel design")
+    recheck.add_argument(
+        "--candidate-design", required=True, type=Path, help="fresh panel design"
+    )
+    recheck.add_argument("--expect-sha256", required=True, help="trusted source study digest")
+    recheck.add_argument(
+        "--expect-candidate-sha256", required=True, help="trusted fresh study digest"
+    )
+    recheck.add_argument("--expect-design-sha256", help="trusted source design digest")
+    recheck.add_argument(
+        "--expect-candidate-design-sha256", help="trusted candidate design digest"
+    )
     ingest = commands.add_parser(
         "from-handoff", help="import a public native Dispatch Handoff study"
     )
@@ -172,7 +197,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     trajectory.add_argument("--source-order", type=Path, required=True)
     trajectory.add_argument("--target-order", type=Path, required=True)
     trajectory.add_argument("--role", required=True)
-    trajectory.add_argument("--field", action="append", metavar="JSON_POINTER", help="select an observed field; repeatable")
+    trajectory.add_argument(
+        "--field",
+        action="append",
+        metavar="JSON_POINTER",
+        help="select an observed field; repeatable",
+    )
     audit = commands.add_parser(
         "context-audit",
         help="find recorded actions that selected context fields cannot distinguish",
@@ -242,12 +272,26 @@ def main(argv: Sequence[str] | None = None) -> int:
                     "schema": "seatlab.study-seal/v1",
                     "study_sha256": digest(manifest),
                 }
+            elif args.study_action == "recheck":
+                result = recheck_panel(
+                    args.source,
+                    args.candidate,
+                    design=args.design,
+                    candidate_design=args.candidate_design,
+                    expect_sha256=args.expect_sha256,
+                    expect_candidate_sha256=args.expect_candidate_sha256,
+                    expect_design_sha256=args.expect_design_sha256,
+                    expect_candidate_design_sha256=args.expect_candidate_design_sha256,
+                )
+                exit_code = recheck_exit_code(result)
             elif args.study_action == "relations":
                 result = export_relations(
                     args.manifest, args.out, expect_sha256=args.expect_sha256
                 )
             elif args.study_action == "panel":
-                result = panel_report(args.manifest, args.design, expect_sha256=args.expect_sha256)
+                result = panel_report(
+                    args.manifest, args.design, expect_sha256=args.expect_sha256
+                )
                 if args.html is not None:
                     write_panel_html(result, args.html)
             else:
@@ -286,8 +330,12 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         elif args.command == "role-trajectory":
             result = role_trajectory(
-                args.source, args.target, source_order=args.source_order,
-                target_order=args.target_order, role=args.role, fields=args.field,
+                args.source,
+                args.target,
+                source_order=args.source_order,
+                target_order=args.target_order,
+                role=args.role,
+                fields=args.field,
             )
         elif args.command == "context-audit":
             result = audit_context(
@@ -329,7 +377,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 )
     except StudyMismatch as error:
         print(f"seatlab: {error}", file=sys.stderr)
-        return 1
+        return 2 if args.command == "study" and args.study_action == "recheck" else 1
     except (OSError, ValueError) as error:
         print(f"seatlab: {error}", file=sys.stderr)
         return 2

@@ -1,0 +1,52 @@
+name: SeatLab panel recheck
+description: Recheck an independent SeatLab study against a pinned source panel. No network, no installs. Exit 0 matched, 1 changed, 2 refused input, 3 incomplete.
+inputs:
+  source:
+    description: Relative path of the source study manifest under GITHUB_WORKSPACE.
+    required: true
+  candidate:
+    description: Relative path of the candidate study manifest under GITHUB_WORKSPACE.
+    required: true
+  design:
+    description: Relative path of the source panel design under GITHUB_WORKSPACE.
+    required: true
+  candidate-design:
+    description: Relative path of the candidate panel design under GITHUB_WORKSPACE.
+    required: true
+  expected-sha256:
+    description: Trusted lowercase 64-character SHA-256 of the source study.
+    required: true
+  expected-candidate-sha256:
+    description: Trusted lowercase 64-character SHA-256 of the candidate study.
+    required: true
+  expected-design-sha256:
+    description: Trusted lowercase 64-character SHA-256 of the source design.
+    required: true
+  expected-candidate-design-sha256:
+    description: Trusted lowercase 64-character SHA-256 of the candidate design.
+    required: true
+outputs:
+  status:
+    description: Recheck status, one of matched, changed or incomplete. Not set when input is refused.
+    value: ${{ steps.recheck.outputs.status }}
+  report:
+    description: Path of the read-only recheck JSON file. Not set when input is refused.
+    value: ${{ steps.recheck.outputs.report }}
+  entries:
+    description: Number of compared case and criterion entries. Not set when input is refused.
+    value: ${{ steps.recheck.outputs.entries }}
+runs:
+  using: composite
+  steps:
+    - id: recheck
+      shell: bash
+      env:
+        SEATLAB_SOURCE: ${{ inputs.source }}
+        SEATLAB_CANDIDATE: ${{ inputs.candidate }}
+        SEATLAB_DESIGN: ${{ inputs.design }}
+        SEATLAB_CANDIDATE_DESIGN: ${{ inputs.candidate-design }}
+        SEATLAB_EXPECTED_SHA256: ${{ inputs.expected-sha256 }}
+        SEATLAB_EXPECTED_CANDIDATE_SHA256: ${{ inputs.expected-candidate-sha256 }}
+        SEATLAB_EXPECTED_DESIGN_SHA256: ${{ inputs.expected-design-sha256 }}
+        SEATLAB_EXPECTED_CANDIDATE_DESIGN_SHA256: ${{ inputs.expected-candidate-design-sha256 }}
+      run: python3 -I -S "$GITHUB_ACTION_PATH/../../action/recheck.py"
