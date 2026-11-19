@@ -2,7 +2,18 @@
 
 Harbor measures whether a team completes its task. SeatLab can answer a different release question: **did my policy or context change an observed team behavior we intended to keep?** This example compares a fixed set of 2 native worlds against independently collected candidates. It does not require a Harbor install, Docker, an API key or a model judge.
 
-## Try the known regression
+## Reproduce the 3 controls with one download
+
+Use Python 3.11 or later. Start in a new directory. No installation, Docker, account, or API key is necessary.
+
+```sh
+curl -fLsS https://github.com/PeterMakhnatch/harbor-seatlab/releases/download/v0.14.0/seatlab-controls.pyz -o seatlab-controls.pyz
+printf '%s  seatlab-controls.pyz\n' b6dbb22bd487a1ef5d8a99547bd142ac65281fac21bce14c883d7996eaac077d | shasum -a 256 -c - && python3 -I -S seatlab-controls.pyz evidence
+```
+
+After the download, the program needs no network. It contains the released CLI and 3 pinned native data archives. It recomputes and checks each complete JSON report against the public release. The command refuses to replace an existing `evidence` directory. A successful demo exits `0`; the 3 inner gate exits are `0` (matched), `1` (changed), and `3` (incomplete). The third comparison withholds one binding and creates no trials. See the [interactive field report](https://petermakhnatch.github.io/harbor-seatlab/panel-recheck.html).
+
+## Run the general CLI on the changed candidate
 
 Use Python 3.11 or later. Clone this public repository at `v0.14.0`, or download its source. Start in its root.
 
@@ -24,7 +35,7 @@ printf 'SeatLab exit: %s\n' "$rc"
 "$work/venv/bin/python" -c 'import json, sys; print(json.load(open(sys.argv[1]))["counts"])' "$work/recheck.json"
 ```
 
-Expected exit: **1**. Expected counts: 18 entries, 8 changed, 10 stable and 0 unknown. The downloader checks each archive before unpacking it. The analysis itself runs offline and imports no code from the evidence. The `unchanged` directory provides the independently collected Linux negative control. Its candidate study pin is `f69b4276ad27a50a14ab80dd67e832907048425b92ddb9d0317a1233a7cc51ce` and its design pin is the same as the changed control's.
+Expected exit: **1**. Expected counts: 18 entries, 8 changed, 10 stable and 0 unknown. Exit `1` alone does not establish a change. Require a valid `seatlab.panel-recheck/v1` report with `status: changed`. A missing report is an execution failure. The downloader checks each archive before unpacking it. The analysis itself runs offline and imports no code from the evidence. The `unchanged` directory provides the independently collected Linux negative control. Its candidate study pin is `f69b4276ad27a50a14ab80dd67e832907048425b92ddb9d0317a1233a7cc51ce` and its design pin is the same as the changed control's.
 
 ## What actually ran
 
@@ -45,3 +56,5 @@ The [Linux run](https://github.com/PeterMakhnatch/harbor-seatlab/actions/runs/44
 ## Use this in a real repository
 
 Set 4 trusted pins outside the submitted data: the source and candidate study pins and their respective design pins. Stage the two bundles under your checkout. Use `PeterMakhnatch/harbor-seatlab/actions/panel-recheck` at a reviewed commit. Do not set `continue-on-error` in a real gate. A changed or incomplete panel fails. Invalid inputs fail without publishing a report. The [workflow](../.github/workflows/measured-controls.yml) intentionally captures expected failures to check each exit. The [command contract](panel-recheck.md) explains missing cases, unknown evidence, and new native UUIDs. See the [smaller panel](measured-panel.md) for how the source selected the cases.
+
+An [independent consumer repository](https://github.com/PeterMakhnatch/harbor-multiagent/actions/runs/44553270796) runs the published action. The [stock Eval Lab join](https://github.com/PeterMakhnatch/harbor-seatlab/releases/download/v0.14.0/positive-stock.json) resolves all 10 changed-candidate trial IDs. It counts 20 role executions, but only 10 shared rewards. All 10 rewards are 1.
