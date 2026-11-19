@@ -6,7 +6,7 @@ from base64 import b64encode
 from hashlib import sha256
 from html import escape
 from pathlib import Path
-from typing import Literal, TypedDict, cast
+from typing import Literal, NotRequired, TypedDict, cast
 
 from .tape import Action, Observation
 
@@ -93,6 +93,13 @@ class _Prediction(TypedDict):
     input_sha256: str
 
 
+class _ExternalObservation(TypedDict):
+    input_match: bool | None
+    action_match: bool | None
+    score_match: bool | None
+    execution_attested: Literal[False]
+
+
 class _Pair(TypedDict):
     id: str
     source: _Arm
@@ -104,6 +111,7 @@ class _Pair(TypedDict):
     action_match: bool | None
     score_match: bool | None
     native_action_changed: bool | None
+    external_observation: NotRequired[_ExternalObservation]
 
 
 class _Report(TypedDict):
@@ -159,6 +167,15 @@ def _render_case(pair: _Pair) -> str:
     comparison_note = unverified
     if status == "mismatch" and input_match is False:
         comparison_note = " (inputs differ)"
+    input_note = unverified
+    action_match = pair["action_match"]
+    score_match = pair["score_match"]
+    if external := pair.get("external_observation"):
+        input_match = external["input_match"]
+        action_match = external["action_match"]
+        score_match = external["score_match"]
+        input_note = " (derived context)"
+        comparison_note = " (logged external result; execution not attested)"
     reasons = ", ".join(_code(reason) for reason in pair["reasons"]) or "None"
 
     return f"""<details id="case-{case_id}" data-case-id="{case_id}" data-status="{status}">
@@ -170,9 +187,9 @@ def _render_case(pair: _Pair) -> str:
       <div><dt>Independently observed target action</dt><dd>{_observed(target)}</dd></div>
     </dl>
     <dl class="grid">
-      <div><dt>Input match</dt><dd>{_check(input_match, unverified)}</dd></div>
-      <div><dt>Action match</dt><dd>{_check(pair["action_match"], comparison_note)}</dd></div>
-      <div><dt>Score match</dt><dd>{_check(pair["score_match"], comparison_note)}</dd></div>
+      <div><dt>Input match</dt><dd>{_check(input_match, input_note)}</dd></div>
+      <div><dt>Action match</dt><dd>{_check(action_match, comparison_note)}</dd></div>
+      <div><dt>Score match</dt><dd>{_check(score_match, comparison_note)}</dd></div>
       <div><dt>Native action changed</dt><dd>{_check(pair["native_action_changed"])}</dd></div>
     </dl>
     <dl class="grid">

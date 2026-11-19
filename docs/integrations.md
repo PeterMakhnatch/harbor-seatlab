@@ -4,6 +4,8 @@ Use SeatLab when you can name a decision, what one participant could see, and ho
 
 ## Connect an Olam task
 
+For a working task, start with the [receipt board](../examples/receipt-board/). The [author guide](authoring.md) shows how the trusted adapter turns a world-accepted actor receipt into a decision and a role episode.
+
 1. Capture the complete role view at the action boundary. A database dump, game log, or final transcript is not that view.
 2. Preserve the native trial UUID and distinguish a deliberate null action from an absent action. Store the private reference **outside** the actor view.
 3. Write one [decision record](format.md) per decision. Mark exact, acknowledged bytes `bound`. Mark a reconstructed projection `reconstructed`. Run `seatlab describe` on the exported tape.
