@@ -1,0 +1,62 @@
+name: Run two native Mindustry chat attempts; a server record is not a read
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened]
+    paths:
+      - '.github/workflows/native-mindustry-chat.yml'
+      - 'examples/mindustry-chat/**'
+permissions:
+  contents: read
+jobs:
+  native:
+    # Manual runs, or pull requests from this repository only.
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 46
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          repository: olamlabs/harbor-multiagent
+          ref: 4a194016336ccd1ce3fcc799b10158ca0375eb63
+          path: stock-olam
+          persist-credentials: false
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          repository: olamlabs/multi-agent-mindustry
+          ref: 1374e46a229c73763a1e46f347f67676ff1b434b
+          path: original-game
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: '0.13.9'
+      - name: Install stock Harbor
+        run: uv sync --project stock-olam --locked --no-dev --python 3.12
+      - name: Run read and no-read once each, no retries
+        timeout-minutes: 40
+        run: |
+          set -euo pipefail
+          # run.py allowlists HOME PATH TMPDIR LANG LC_ALL DOCKER_HOST DOCKER_CONTEXT
+          # and sets PYTHONPATH itself. Docker layers are reused between the two attempts.
+          # Harbor and game failures are recorded in summary.json, not raised here.
+          python3 examples/mindustry-chat/run.py \
+            "$PWD/original-game/mindustry-endless-survival" \
+            --harbor "$PWD/stock-olam/.venv/bin/harbor" \
+            --out "$RUNNER_TEMP/mindustry-chat"
+          jq -e '(.arms | keys) == ["no-read","read"]' \
+            "$RUNNER_TEMP/mindustry-chat/public/summary.json"
+      - name: Retain public summaries only
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: mindustry-chat-public
+          path: |
+            ${{ runner.temp }}/mindustry-chat/public/plan.json
+            ${{ runner.temp }}/mindustry-chat/public/read.json
+            ${{ runner.temp }}/mindustry-chat/public/no-read.json
+            ${{ runner.temp }}/mindustry-chat/public/summary.json
+          if-no-files-found: error
+          retention-days: 7
