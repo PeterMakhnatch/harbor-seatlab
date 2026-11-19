@@ -13,6 +13,7 @@ from .calibration import calibrate
 from .context import ContextSpec
 from .handoff import from_handoff
 from .inspector import write_inspector
+from .matrix import build_matrix
 from .merge import merge
 from .panel import panel_report
 from .panel_html import write_panel_html
@@ -59,6 +60,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         "study", help="seal, verify, join or select cases from a portable native study"
     )
     study_commands = study.add_subparsers(dest="study_action", required=True)
+    matrix = study_commands.add_parser(
+        "build-matrix", help="build a sealed panel from recorded cases and team arms"
+    )
+    matrix.add_argument("matrix", type=Path, help="declarative panel matrix (JSON)")
+    matrix.add_argument("--out", type=Path, required=True, help="new portable bundle directory")
     seal = study_commands.add_parser("seal", help="record file and analysis digests")
     seal.add_argument("recipe", type=Path)
     seal.add_argument(
@@ -272,6 +278,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                     "schema": "seatlab.study-seal/v1",
                     "study_sha256": digest(manifest),
                 }
+            elif args.study_action == "build-matrix":
+                result = build_matrix(args.matrix, args.out)
             elif args.study_action == "recheck":
                 result = recheck_panel(
                     args.source,

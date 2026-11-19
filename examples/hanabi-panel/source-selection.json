@@ -1,0 +1,25 @@
+{
+  "cases": 8,
+  "checks": 32,
+  "design_sha256": "6e46a22efecdea98366db2ddc132123bdb18b7e95dd06646e2d4f82a4934950a",
+  "native_trials": 32,
+  "schema": "seatlab.matrix-build/v1",
+  "selection": {
+    "case_count": 1,
+    "cases": [
+      "d00"
+    ],
+    "covered_criteria": [
+      "ll-lr-p0-action-differs",
+      "ll-lr-p0-view-differs",
+      "ll-rl-p1-action-differs",
+      "ll-rl-p1-view-differs",
+      "rr-lr-p1-action-differs",
+      "rr-lr-p1-view-differs",
+      "rr-rl-p0-action-differs",
+      "rr-rl-p0-view-differs"
+    ],
+    "not_witnessed": []
+  },
+  "study_sha256": "9b93b09d4d5d53ebe6c3aa185ff217f8a309cad628ddd0ea71570cea3648e51b"
+}
