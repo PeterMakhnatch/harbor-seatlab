@@ -1,0 +1,36 @@
+# Validate a replay against a different native trial
+
+A replay is useful when its prediction survives a real change in the environment. A correct replay on its own source is not that test. This extension compares a local context intervention with a separately observed native treatment. It keeps the ordinary `compare` command strict: two different native trials can never pass as one recorded decision.
+
+## Registered engineering check
+
+For each released five-person scheduling case, start from the native coordinator's complete `full` proposals. An offline intervention keeps the first 8 starts from each of the 5 lists. It relabels the protocol as `first8`; the native coordinator sees this field too. Apply the same intersection policy. Compare this prediction with the *separate* native `first8` trial for that exact private case. The held-out object here is the other native execution, not the published calendar data. The public answers and offline protocol outcomes were already inspected. This is implementation calibration, not a blinded study or a model comparison.
+
+Register a pair manifest with a case-content digest for each arm. Both digests must match. The two trial UUIDs must differ. Bind each side to its original decision record. Require a real acknowledged target view to count an input match. Compare canonical input digests before checking choices. If inputs differ, an equal final reward cannot establish that the replay reproduced the native interaction. Report any differing action and preserve legitimate nulls. Count unavailable trials as missing, not zero. Also count cases where the treatment actually changes the observed action. Do not quietly drop incomplete pairs.
+
+The initial example has the first case in each of the 4 strata. The extended campaign registers all 200 cases and both native arms, whether measured or not. This is a prediction about a specific deterministic channel change with fixed actors; it is not a claim about replacing a live human, learned speaker, or adaptive conversation.
+
+## Run the positive and negative controls
+
+From the installed source checkout:
+
+```sh
+out=$(mktemp -d)
+seatlab replay examples/meeting-sources.jsonl --policy intersection \
+  --transform-file examples/meeting-first8.json --out "$out/truncated.jsonl"
+seatlab calibrate examples/meeting.jsonl "$out/truncated.jsonl" \
+  --pairs examples/meeting-pairs.json --transform-file examples/meeting-first8.json
+seatlab replay examples/meeting-sources.jsonl --policy intersection --out "$out/unchanged.jsonl"
+seatlab calibrate examples/meeting.jsonl "$out/unchanged.jsonl" --pairs examples/meeting-pairs.json
+seatlab calibrate examples/meeting.jsonl "$out/truncated.jsonl" --pairs examples/meeting-pairs.json
+```
+
+| Source-side intervention | Registered pairs | Independently checked inputs | Matching native actions | Reproduced pairs |
+| --- | ---: | ---: | ---: | ---: |
+| First 8, with recipe | 4 | 4 | 4 | 4 |
+| No intervention | 4 | 4 | 0 | 0 |
+| First 8, recipe withheld | 4 | 0 | Not verifiable | 0 |
+
+For case `calendar:2-1`, the source coordinator chooses time `245`. The separate target coordinator submits `null`. The recipe predicts `null`, while the unchanged replay predicts `245`. All 4 target nulls are real decisions. Withholding the recipe leaves 4 opaque predictions; it does not make them wrong. Inspect `pairs` for the role, source and target receipts, actual choices, and mismatch reasons.
+
+The [native exporter](https://github.com/PeterMakhnatch/harbor-multiagent/tree/experiments/seatlab-masbench-calendars/adapters/masbench-scheduling) produces the pair manifest and both tapes from registered trial directories. Use `--all-cases` and the pinned dataset to retain missing scheduled cases. Do not use a complete local simulation to fill an absent native record.
