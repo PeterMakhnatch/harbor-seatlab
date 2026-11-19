@@ -1,0 +1,123 @@
+{
+  "all_changed_rule_workers": {
+    "jobs": {
+      "expected": [
+        "s101.plain-blind",
+        "s101.plain-plain",
+        "s101.plain-rotate",
+        "s101.rotate-plain",
+        "s101.rotate-rotate",
+        "s102.plain-blind",
+        "s102.plain-plain",
+        "s102.plain-rotate",
+        "s102.rotate-plain",
+        "s102.rotate-rotate"
+      ],
+      "missing": [],
+      "received": [
+        "s101.plain-blind",
+        "s101.plain-plain",
+        "s101.plain-rotate",
+        "s101.rotate-plain",
+        "s101.rotate-rotate",
+        "s102.plain-blind",
+        "s102.plain-plain",
+        "s102.plain-rotate",
+        "s102.rotate-plain",
+        "s102.rotate-rotate"
+      ]
+    },
+    "native_trials": {
+      "s101.plain-blind": "bc6638db-edbc-4d0e-868d-6c78cccd077a",
+      "s101.plain-plain": "1f1286da-a091-477a-97d6-79a2cb62e281",
+      "s101.plain-rotate": "f7711bb9-46ac-43b6-8694-252bb4b8b370",
+      "s101.rotate-plain": "287895d4-5a49-45ad-8940-c48957036d3d",
+      "s101.rotate-rotate": "417f46c8-daf3-411e-8454-cd18c9445b21",
+      "s102.plain-blind": "2fce63b2-712a-4ae5-83e1-f4333c436945",
+      "s102.plain-plain": "8675c4b0-edd4-4b4e-883c-5cb0a5604142",
+      "s102.plain-rotate": "6cf5ed45-183c-4739-b4b8-fcdba946f08f",
+      "s102.rotate-plain": "d1f5aef9-e450-4aa6-930d-a72e9a0ebe4a",
+      "s102.rotate-rotate": "84bf89cd-42e6-492b-b1d8-81e7c43ee970"
+    },
+    "recheck": {
+      "changed": 8,
+      "entries": 18,
+      "stable": 10,
+      "unknown": 0
+    },
+    "schema": "seatlab.worker-collection/v1",
+    "source_pins": {
+      "candidate_matrix_sha256": "95422a6990597995790087fff0932636f01da538ec37d05f82778b5044047ab1",
+      "design_sha256": "1d1f0962156346cd5095493df66207730fda1e838f8c56b1b57ea625721a560c",
+      "study_sha256": "45de22680d9700ba6f694fcb064908aafc152ed84a4da41d8dd6f414fe0ff017",
+      "worklist_sha256": "5908aa5c706d20c008a8542abc01275e5c2e996b28db57c30b144d8ec6577935"
+    },
+    "status": "changed"
+  },
+  "one_worker_withheld": {
+    "jobs": {
+      "expected": [
+        "s101.plain-blind",
+        "s101.plain-plain",
+        "s101.plain-rotate",
+        "s101.rotate-plain",
+        "s101.rotate-rotate",
+        "s102.plain-blind",
+        "s102.plain-plain",
+        "s102.plain-rotate",
+        "s102.rotate-plain",
+        "s102.rotate-rotate"
+      ],
+      "missing": [
+        "s101.plain-blind"
+      ],
+      "received": [
+        "s101.plain-plain",
+        "s101.plain-rotate",
+        "s101.rotate-plain",
+        "s101.rotate-rotate",
+        "s102.plain-blind",
+        "s102.plain-plain",
+        "s102.plain-rotate",
+        "s102.rotate-plain",
+        "s102.rotate-rotate"
+      ]
+    },
+    "native_trials": {
+      "s101.plain-plain": "1f1286da-a091-477a-97d6-79a2cb62e281",
+      "s101.plain-rotate": "f7711bb9-46ac-43b6-8694-252bb4b8b370",
+      "s101.rotate-plain": "287895d4-5a49-45ad-8940-c48957036d3d",
+      "s101.rotate-rotate": "417f46c8-daf3-411e-8454-cd18c9445b21",
+      "s102.plain-blind": "2fce63b2-712a-4ae5-83e1-f4333c436945",
+      "s102.plain-plain": "8675c4b0-edd4-4b4e-883c-5cb0a5604142",
+      "s102.plain-rotate": "6cf5ed45-183c-4739-b4b8-fcdba946f08f",
+      "s102.rotate-plain": "d1f5aef9-e450-4aa6-930d-a72e9a0ebe4a",
+      "s102.rotate-rotate": "84bf89cd-42e6-492b-b1d8-81e7c43ee970"
+    },
+    "recheck": {
+      "changed": 4,
+      "entries": 18,
+      "stable": 10,
+      "unknown": 4
+    },
+    "schema": "seatlab.worker-collection/v1",
+    "source_pins": {
+      "candidate_matrix_sha256": "95422a6990597995790087fff0932636f01da538ec37d05f82778b5044047ab1",
+      "design_sha256": "1d1f0962156346cd5095493df66207730fda1e838f8c56b1b57ea625721a560c",
+      "study_sha256": "45de22680d9700ba6f694fcb064908aafc152ed84a4da41d8dd6f414fe0ff017",
+      "worklist_sha256": "5908aa5c706d20c008a8542abc01275e5c2e996b28db57c30b144d8ec6577935"
+    },
+    "status": "changed"
+  },
+  "schema": "seatlab.worker-controls/v1",
+  "source_receipt": {
+    "candidate_matrix_sha256": "95422a6990597995790087fff0932636f01da538ec37d05f82778b5044047ab1",
+    "cases": 12,
+    "checks": 60,
+    "design_sha256": "1d1f0962156346cd5095493df66207730fda1e838f8c56b1b57ea625721a560c",
+    "native_trials": 60,
+    "schema": "seatlab.matrix-build/v1",
+    "study_sha256": "45de22680d9700ba6f694fcb064908aafc152ed84a4da41d8dd6f414fe0ff017",
+    "worklist_sha256": "5908aa5c706d20c008a8542abc01275e5c2e996b28db57c30b144d8ec6577935"
+  }
+}

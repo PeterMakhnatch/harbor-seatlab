@@ -8,6 +8,7 @@ on:
       - 'examples/hanabi-panel/export_native.py'
       - 'examples/world-order/from-hanabi.py'
       - 'src/seatlab/matrix*.py'
+      - 'src/seatlab/worker_*.py'
 permissions:
   contents: read
 jobs:
@@ -133,7 +134,7 @@ jobs:
       - name: Upload only the flat evidence for this one job
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: job-${{ matrix.job }}
+          name: ${{ matrix.job }}
           path: |
             ${{ runner.temp }}/job-evidence/episodes.jsonl
             ${{ runner.temp }}/job-evidence/order.json
@@ -142,6 +143,7 @@ jobs:
 
   compare:
     needs: [source, native]
+    if: ${{ !cancelled() && needs.source.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -161,56 +163,35 @@ jobs:
         with:
           name: native-hanabi-source
           path: ${{ runner.temp }}/source-download
-      - name: Download each job artifact into its own folder, not merged
+      - name: Create an empty return root for interrupted workers
+        run: mkdir "$RUNNER_TEMP/worker-returns"
+      - name: Download native returns without merging worker directories
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          pattern: job-*
+          pattern: d*.*
           merge-multiple: false
-          path: ${{ runner.temp }}/job-download
-      - name: Build the candidate input from the trusted worklist
+          path: ${{ runner.temp }}/worker-returns
+      - name: Collect the actual workers and recheck the frozen source
         run: |
           set -euo pipefail
-          src="$RUNNER_TEMP/source-download"
-          cand="$RUNNER_TEMP/candidate-input"
-          export SRC="$src/source"
-          "$RUNNER_TEMP/analyst/bin/python" - <<'PY'
-          import json, os
-          from pathlib import Path
-          from seatlab.study_inputs import read_document
-          from seatlab.tape import digest
-          root = Path(os.environ["SRC"])
-          pins = json.loads(Path("examples/hanabi-panel/handoff-pins.json").read_bytes())
-          for file, key in (("worklist.json", "worklist_sha256"), ("candidate-matrix.json", "candidate_matrix_sha256")):
-              if digest(read_document(root / file)) != pins[key]:
-                  raise SystemExit(f"wrong public pin for {file}")
-          PY
-          mkdir "$cand" "$cand/jobs"
-          cp "$src/source/candidate-matrix.json" "$cand/matrix.json"
-          jq -r '.jobs[].id' "$src/source/worklist.json" | while IFS= read -r id; do
-            case "$id" in d00.ll | d00.lr | d00.rl | d00.rr) ;; *) echo "unexpected job" >&2; exit 2 ;; esac
-            from="$RUNNER_TEMP/job-download/job-$id"
-            listing=$(find "$from" -mindepth 1 -printf '%y %P\n' | sort)
-            test "$listing" = "$(printf 'f episodes.jsonl\nf order.json')"
-            mkdir "$cand/jobs/$id"
-            cp "$from/episodes.jsonl" "$from/order.json" "$cand/jobs/$id/"
-          done
-      - name: Build the candidate and recheck all eight selected entries
+          "$RUNNER_TEMP/analyst/bin/seatlab" study collect-jobs "$RUNNER_TEMP/source-download/source" \
+            "$RUNNER_TEMP/worker-returns" --receipt examples/hanabi-panel/source-build.json \
+            --out "$RUNNER_TEMP/native-result"
+          jq -e '.selection == ["d00"] and .counts == {entries:8,stable:8,changed:0,unknown:0}' "$RUNNER_TEMP/native-result/recheck.json"
+      - name: Withhold one valid worker and check the affected criteria only
         run: |
           set -euo pipefail
-          ex=examples/hanabi-panel
-          cli="$RUNNER_TEMP/analyst/bin/seatlab"
-          src="$RUNNER_TEMP/source-download"
-          res="$RUNNER_TEMP/native-result"
-          mkdir "$res"
-          "$cli" study build-matrix "$RUNNER_TEMP/candidate-input/matrix.json" --out "$res/candidate" > "$res/candidate-receipt.json"
-          "$cli" study recheck "$src/source/study.json" "$res/candidate/study.json" \
-            --design "$src/source/panel-design.json" --candidate-design "$res/candidate/panel-design.json" \
-            --expect-sha256 "$(jq -er .study_sha256 "$ex/source-selection.json")" \
-            --expect-design-sha256 "$(jq -er .design_sha256 "$ex/source-selection.json")" \
-            --expect-candidate-sha256 "$(jq -er .study_sha256 "$res/candidate-receipt.json")" \
-            --expect-candidate-design-sha256 "$(jq -er .design_sha256 "$res/candidate-receipt.json")" > "$res/recheck.json"
-          jq -e '.status == "matched" and .selection == ["d00"] and
-            .counts == {entries: 8, stable: 8, changed: 0, unknown: 0}' "$res/recheck.json"
+          subset="$RUNNER_TEMP/partial-returns"
+          mkdir "$subset"
+          for id in d00.ll d00.lr d00.rl; do cp -R "$RUNNER_TEMP/worker-returns/$id" "$subset/"; done
+          code=0
+          "$RUNNER_TEMP/analyst/bin/seatlab" study collect-jobs "$RUNNER_TEMP/source-download/source" \
+            "$subset" --receipt examples/hanabi-panel/source-build.json \
+            --out "$RUNNER_TEMP/without-rr" || code=$?
+          test "$code" -eq 3
+          jq -e '.status == "incomplete" and .jobs.missing == ["d00.rr"] and
+            .recheck == {entries:8,stable:4,changed:0,unknown:4}' "$RUNNER_TEMP/without-rr/collection.json"
+          cp "$RUNNER_TEMP/without-rr/collection.json" "$RUNNER_TEMP/native-result/withheld-worker.json"
       - name: Retain the sanitized result and complete candidate
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
