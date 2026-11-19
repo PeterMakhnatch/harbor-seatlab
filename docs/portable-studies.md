@@ -10,7 +10,7 @@ Install the SeatLab version named by the publisher. Extract the publisher's data
 seatlab study verify ./study.json --expect-sha256 "$STUDY_SHA256"
 ```
 
-The digest covers the canonical JSON manifest, not its indentation or final newline. Verification hashes the exact bytes of every declared input file. It recomputes each complete calibration or alignment report and checks its canonical digest. The output lists counts per check. It does not sum seat counts across checks or turn them into team scores.
+The digest covers the canonical JSON manifest, not its indentation or final newline. Verification hashes the exact bytes of every declared input file. It recomputes each report and checks its canonical digest. The output lists counts or a world-step boundary per check. It does not sum seat counts across checks or turn them into team scores.
 
 A verified study can contain missing native trials, a negative control with no matching inputs, or logged external actions with no proof of execution. `status: verified` means the published analysis reproduces, not that the policy succeeds. With no trusted digest, verification establishes internal consistency only. It does not authenticate a publisher, a native trial, or a worker. Undeclared files are not verified.
 
@@ -47,9 +47,11 @@ Write `recipe.json` beside the inputs. This example registers 2 checks with diff
 }
 ```
 
+For [team alignment](world-order.md), use `kind: "team-alignment"` with `id`, `source`, `target`, `source_order` and `target_order`. Both order files are inputs to the study. `input_paths` is optional.
+
 Run `seatlab study seal recipe.json --out study.json`. The output path must be new and beside the recipe. SeatLab reads a private snapshot of the referenced files. It publishes the manifest only after every analysis completes. Record the printed `study_sha256` separately. Distribute `study.json` and all its input files with their relative names intact. The reader does not need `recipe.json` or any executable from the author.
 
-The format accepts only `calibration` and `alignment`. It does not accept commands, plugins, URLs, parent-directory paths, or symlinks. The publisher selects the evidence and registers the pairing; SeatLab cannot establish that an omitted trial never existed. Different analysis versions may produce different report digests. This is why the publisher should give the reader the tested SeatLab version.
+SeatLab 0.9 accepts `calibration`, `alignment` and `team-alignment`. Version 0.8 supports the first 2 kinds. Neither accepts commands, plugins, URLs, parent-directory paths, or symlinks. The publisher selects the evidence and registers the pairing; SeatLab cannot establish that an omitted trial never existed. Different analysis versions may produce different report digests. Give the reader the tested SeatLab version.
 
 | Exit | Meaning |
 | --- | --- |
