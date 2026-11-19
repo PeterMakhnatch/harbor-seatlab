@@ -8,11 +8,25 @@ import sys
 from pathlib import Path
 from typing import Sequence
 
+from .alignment import align
 from .calibration import calibrate
 from .context import ContextSpec
 from .handoff import from_handoff
+from .prefix import prefix
 from .replay import replay
 from .report import compare, describe
+
+
+def _policy_arguments(parser: argparse.ArgumentParser, policies: tuple[str, ...]) -> None:
+    parser.add_argument("--timeout-seconds", type=float, default=10.0)
+    selection = parser.add_mutually_exclusive_group(required=True)
+    selection.add_argument("--policy", choices=policies)
+    selection.add_argument(
+        "--exec",
+        dest="executable",
+        nargs=argparse.REMAINDER,
+        help="trusted executable and arguments; specify last, use an absolute path",
+    )
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -34,16 +48,23 @@ def main(argv: Sequence[str] | None = None) -> int:
     transforms.add_argument(
         "--transform-file", type=Path, help="declarative context intervention (JSON)"
     )
-    run.add_argument("--timeout-seconds", type=float, default=10.0)
-    selection = run.add_mutually_exclusive_group(required=True)
-    selection.add_argument(
-        "--policy", choices=("observed", "revision", "arrival", "intersection")
+    _policy_arguments(run, ("observed", "revision", "arrival", "intersection"))
+    sequence = commands.add_parser(
+        "prefix", help="compare a policy only while a recorded role history still applies"
     )
-    selection.add_argument(
-        "--exec",
-        dest="executable",
-        nargs=argparse.REMAINDER,
-        help="trusted executable and arguments; specify last, use an absolute path",
+    sequence.add_argument("episodes", type=Path)
+    sequence.add_argument(
+        "--history", action="store_true", help="include this role's matched past"
+    )
+    _policy_arguments(sequence, ("observed",))
+    alignment = commands.add_parser(
+        "align",
+        help="find the first changed input or action in independently recorded episodes",
+    )
+    alignment.add_argument("source", type=Path)
+    alignment.add_argument("target", type=Path)
+    alignment.add_argument(
+        "--pairs", type=Path, required=True, help="registered episode receipts"
     )
     pair = commands.add_parser(
         "compare", help="compare complete results against the same recorded views"
@@ -73,6 +94,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             result = describe(args.tape)
         elif args.command == "compare":
             result = compare(args.baseline, args.candidate)
+        elif args.command == "align":
+            result = align(args.source, args.target, args.pairs)
         elif args.command == "calibrate":
             context = ContextSpec.load(args.transform_file) if args.transform_file else None
             result = calibrate(args.tape, args.predictions, args.pairs, context=context)
@@ -82,17 +105,22 @@ def main(argv: Sequence[str] | None = None) -> int:
             if not 1 <= args.timeout_seconds <= 300:
                 parser.error("--timeout-seconds must be between 1 and 300")
             policy = args.executable if args.executable is not None else args.policy
-            result = replay(
-                args.tape,
-                args.out,
-                policy,
-                transform=(
-                    ContextSpec.load(args.transform_file)
-                    if args.transform_file
-                    else args.transform
-                ),
-                timeout=args.timeout_seconds,
-            )
+            if args.command == "prefix":
+                result = prefix(
+                    args.episodes, policy, history=args.history, timeout=args.timeout_seconds
+                )
+            else:
+                result = replay(
+                    args.tape,
+                    args.out,
+                    policy,
+                    transform=(
+                        ContextSpec.load(args.transform_file)
+                        if args.transform_file
+                        else args.transform
+                    ),
+                    timeout=args.timeout_seconds,
+                )
     except (OSError, ValueError) as error:
         print(f"seatlab: {error}", file=sys.stderr)
         return 2

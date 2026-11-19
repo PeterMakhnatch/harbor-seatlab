@@ -1,6 +1,6 @@
 # Role decision tape, version 1
 
-A decision tape is UTF-8 JSON Lines. Each line describes one recorded decision. It separates **what the actor may see** from **what the analyst knows**. The harness sends only `view` to a policy. Do not place a native result, a transcript or a global world object in `view`.
+A decision tape is UTF-8 JSON Lines. Each line separates **what the actor could see** from **what the analyst knows**. The harness sends only `view` to a policy. Do not substitute a native result, transcript or privileged world state for the actual actor input. If the task really sends the complete public world state, record that delivered response.
 
 | Field | Meaning |
 | --- | --- |
@@ -25,6 +25,8 @@ The comparison joins by stable key. It checks the role, native trial UUID, origi
 `--transform-file` accepts a `seatlab.context/v1` recipe. It can truncate arrays or replace an exact field value. The transformation works on the actor's view only. It cannot read the native action or score. The replay records the recipe's canonical digest. See the [working example](../examples/meeting-first8.json).
 
 Use `calibrate` rather than `compare` for **different** native trials. Its pair manifest binds each arm to the underlying case hash, native UUID, and whole decision digest. Generate predictions from the source arms only. Provide the same recipe to independently derive the predicted input. A match requires an acknowledged native target view. A matching action alone is not evidence that the input matched. See the [native calibration protocol](native-calibration.md).
+
+For tasks where earlier actions can change later inputs, export [role-local episodes](episodes.md) instead of making every turn an independent decision.
 
 ## Trust boundary
 
