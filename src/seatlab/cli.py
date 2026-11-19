@@ -24,6 +24,7 @@ from .sufficiency import audit_context
 from .tape import digest
 from .team_alignment import team_align
 from .viewwork import act
+from .windows import verify_windows
 
 
 def _policy_arguments(parser: argparse.ArgumentParser, policies: tuple[str, ...]) -> None:
@@ -162,6 +163,19 @@ def main(argv: Sequence[str] | None = None) -> int:
         metavar="N",
         help="show receipts for at most N conflicting inputs (0–100)",
     )
+    windows = commands.add_parser(
+        "verify-windows",
+        help="join native episodes to the context a trusted wrapper sent",
+    )
+    windows.add_argument("episodes", type=Path, help="native role episodes (JSONL)")
+    windows.add_argument(
+        "receipts", type=Path, help="context receipts for those native trials"
+    )
+    windows.add_argument(
+        "--out",
+        type=Path,
+        help="new episode file of the verified actor envelopes (JSONL)",
+    )
     pair = commands.add_parser(
         "compare", help="compare complete results against the same recorded views"
     )
@@ -236,6 +250,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 heldout=args.heldout,
                 witnesses=args.witnesses,
             )
+        elif args.command == "verify-windows":
+            result = verify_windows(args.episodes, args.receipts, out=args.out)
         elif args.command == "calibrate":
             context = ContextSpec.load(args.transform_file) if args.transform_file else None
             result = calibrate(args.tape, args.predictions, args.pairs, context=context)
