@@ -23,7 +23,7 @@ MAX_LINE_BYTES = 4 * 1024 * 1024
 Action: TypeAlias = str | int | None
 Basis: TypeAlias = Literal["reconstructed", "bound", "design"]
 Policy: TypeAlias = Literal["observed", "arrival", "revision", "intersection", "external"]
-Transform: TypeAlias = Literal["identity", "latest"]
+Transform: TypeAlias = str  # Built-in name or a content-addressed context identifier.
 ReplayError: TypeAlias = Literal[
     "missing_observation",
     "invalid_action",
@@ -103,6 +103,7 @@ _RANGE_FIELDS = frozenset(IntRangeAnswers.__annotations__)
 _KEY = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.:-]{0,255}")
 _ROLE = re.compile(r"[A-Za-z][A-Za-z0-9_-]{0,31}")
 _SHA256 = re.compile(r"[0-9a-f]{64}")
+_CONTEXT_TRANSFORM = re.compile(r"context-v1:[0-9a-f]{64}")
 _SURROGATE = re.compile(r"[\ud800-\udfff]")
 _EXTERNAL_ERRORS = (
     "invalid_output",
@@ -335,7 +336,10 @@ def validate_result(record: object) -> Result:
     policy, transform = row["policy"], row["transform"]
     if policy not in ("observed", "arrival", "revision", "intersection", "external"):
         raise TapeError("invalid result policy")
-    if transform not in ("identity", "latest"):
+    if not isinstance(transform, str) or (
+        transform not in ("identity", "latest")
+        and _CONTEXT_TRANSFORM.fullmatch(transform) is None
+    ):
         raise TapeError("invalid result transform")
     if transform == "identity" and row["source_view_sha256"] != row["input_sha256"]:
         raise TapeError("identity transform must preserve the view digest")

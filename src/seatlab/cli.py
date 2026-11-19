@@ -8,6 +8,8 @@ import sys
 from pathlib import Path
 from typing import Sequence
 
+from .calibration import calibrate
+from .context import ContextSpec
 from .handoff import from_handoff
 from .replay import replay
 from .report import compare, describe
@@ -27,7 +29,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     run = commands.add_parser("replay", help="apply a policy to every decision in a tape")
     run.add_argument("tape", type=Path)
     run.add_argument("--out", required=True, type=Path, help="new result file (JSONL)")
-    run.add_argument("--transform", choices=("identity", "latest"), default="identity")
+    transforms = run.add_mutually_exclusive_group()
+    transforms.add_argument("--transform", choices=("identity", "latest"), default="identity")
+    transforms.add_argument(
+        "--transform-file", type=Path, help="declarative context intervention (JSON)"
+    )
     run.add_argument("--timeout-seconds", type=float, default=10.0)
     selection = run.add_mutually_exclusive_group(required=True)
     selection.add_argument(
@@ -44,6 +50,21 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     pair.add_argument("baseline", type=Path)
     pair.add_argument("candidate", type=Path)
+    calibration = commands.add_parser(
+        "calibrate", help="validate predictions against independently recorded native trials"
+    )
+    calibration.add_argument("tape", type=Path, help="recorded decisions from both arms")
+    calibration.add_argument(
+        "predictions", type=Path, help="replay results for source arms only"
+    )
+    calibration.add_argument(
+        "--pairs", required=True, type=Path, help="registered native pairs"
+    )
+    calibration.add_argument(
+        "--transform-file",
+        type=Path,
+        help="recipe to independently check predicted actor inputs",
+    )
     args = parser.parse_args(argv)
     try:
         if args.command == "from-handoff":
@@ -52,6 +73,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             result = describe(args.tape)
         elif args.command == "compare":
             result = compare(args.baseline, args.candidate)
+        elif args.command == "calibrate":
+            context = ContextSpec.load(args.transform_file) if args.transform_file else None
+            result = calibrate(args.tape, args.predictions, args.pairs, context=context)
         else:
             if args.executable is not None and not args.executable:
                 parser.error("--exec requires an absolute executable and optional arguments")
@@ -62,7 +86,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                 args.tape,
                 args.out,
                 policy,
-                transform=args.transform,
+                transform=(
+                    ContextSpec.load(args.transform_file)
+                    if args.transform_file
+                    else args.transform
+                ),
                 timeout=args.timeout_seconds,
             )
     except (OSError, ValueError) as error:

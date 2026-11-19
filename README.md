@@ -22,6 +22,19 @@ The inventory agent reports which bays are available. The dispatch agent sees ut
 
 For the source, see the [native experiment and data](https://github.com/PeterMakhnatch/harbor-multiagent/tree/experiments/seatlab-handoff/examples/seatlab). The [second task](https://github.com/PeterMakhnatch/harbor-multiagent/tree/experiments/seatlab-masbench-calendars/adapters/masbench-scheduling) ports 200 published five-person scheduling scenarios to Olam. That task distinguishes physical feasibility from exact membership in the publisher's answer key. [Olam Harbor](https://github.com/olamlabs/harbor-multiagent) still owns the trial lifecycle and reward.
 
+## Check a replay against another real trial
+
+Can you predict what a different team run will actually do? The source coordinator receives full availability lists. In a separate native run, the same 5 actors report only their first 8 times. Predict the second run from the first. The prediction never reads the second run.
+
+```sh
+.venv/bin/seatlab replay examples/meeting-sources.jsonl --policy intersection \
+  --transform-file examples/meeting-first8.json --out "$run/predicted.jsonl"
+.venv/bin/seatlab calibrate examples/meeting.jsonl "$run/predicted.jsonl" \
+  --pairs examples/meeting-pairs.json --transform-file examples/meeting-first8.json
+```
+
+On these 4 cases, all 4 native actions change from a time to an explicit null. The replay reproduces all 4 target inputs, actions, and scores. The unchanged-input control reproduces none. This tests a deterministic channel change, not a model's general ability. See the [protocol and negative controls](docs/native-calibration.md).
+
 ## Bring a policy
 
 Use `--exec` only with an executable **you trust**. SeatLab is not a sandbox. The process has your operating-system permissions. The harness passes only the canonical role view on standard input. It does not pass the observed action, reference answers, run identity, CLI environment credentials, or source path as policy input. Executables do not run implicitly.
@@ -44,5 +57,7 @@ Write one `{"action": ...}` JSON object to stdout. SeatLab records an unmeasured
 | Join native jobs, trial UUIDs, and per-seat results into a larger evaluation | Eval Lab |
 
 Use [the data contract](docs/format.md) to add an adapter. Use [the evidence note](examples/README.md) to regenerate examples and understand their limits. Recording the same SHA-256 twice is not independent attestation. A client acknowledgment is not proof of understanding. These tools do not detect cheating or claim to explain a model's private reasoning.
+
+For a real Eval Lab query, native source branches, and separate contributor roles, see [where SeatLab fits](docs/integrations.md).
 
 License: [Apache-2.0](LICENSE). This project is independent of Olam Labs and the upstream Harbor project.

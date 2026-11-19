@@ -15,6 +15,7 @@ from time import monotonic
 from typing import cast
 
 from . import tape as wire
+from .context import ContextSpec
 
 _BUILTINS = {"observed", "arrival", "revision", "intersection"}
 _BAYS = {"A", "B", "C", "D"}
@@ -254,7 +255,7 @@ def replay(
     tape: Path,
     out: Path,
     policy: str | list[str],
-    transform: str = "identity",
+    transform: str | ContextSpec = "identity",
     timeout: float = 10.0,
 ) -> dict[str, int]:
     """Publish a scored ledger, with one result for each valid tape decision.
@@ -263,7 +264,13 @@ def replay(
     only the actor view on stdin and run in an empty private working directory
     with a minimal PATH. This is not a sandbox. Run only programs you trust.
     """
-    if transform not in ("identity", "latest"):
+    if isinstance(transform, ContextSpec):
+        context = transform
+        transform_id = transform.identifier
+    elif transform in ("identity", "latest"):
+        context = None
+        transform_id = transform
+    else:
         raise ValueError("unknown replay transform")
     if (
         isinstance(timeout, bool)
@@ -275,7 +282,7 @@ def replay(
     if isinstance(policy, str):
         if policy not in _BUILTINS:
             raise ValueError("unknown replay policy")
-        if policy == "observed" and transform != "identity":
+        if policy == "observed" and transform_id != "identity":
             raise ValueError("observed requires the identity transform")
         name = policy
     else:
@@ -296,7 +303,13 @@ def replay(
     def results() -> Iterator[wire.Result]:
         for row in wire.read_tape(tape):
             source_decision_sha256 = wire.decision_sha256(row)
-            view = _transform(row["view"], transform)
+            if context is None:
+                view = _transform(row["view"], transform_id)
+            else:
+                try:
+                    view = context.apply(row["view"])
+                except ValueError as exc:
+                    raise ValueError(f"context transform for {row['key']}: {exc}") from exc
             data = wire.canonical(view)
             action: wire.Action = None
             result_score = None
@@ -312,7 +325,7 @@ def replay(
                 error = failure.reason
             status = "measured" if error is None else "unmeasured"
             basis = row["basis"]
-            if basis == "bound" and transform != "identity":
+            if basis == "bound" and transform_id != "identity":
                 basis = "reconstructed"
             result = wire.validate_result(
                 {
@@ -326,7 +339,7 @@ def replay(
                     "input_sha256": sha256(data).hexdigest(),
                     "input_bytes": len(data),
                     "policy": name,
-                    "transform": transform,
+                    "transform": transform_id,
                     "status": status,
                     "action": action,
                     "score": result_score,

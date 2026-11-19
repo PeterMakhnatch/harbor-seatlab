@@ -1,0 +1,7 @@
+{
+  "schema": "seatlab.context/v1",
+  "ops": [
+    {"op": "take", "path": ["reports", "*"], "count": 8},
+    {"op": "relabel", "path": ["mode"], "from": "full", "to": "first8"}
+  ]
+}

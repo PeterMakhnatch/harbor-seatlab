@@ -22,6 +22,10 @@ A replay writes one `seatlab.decision-result/v1` per input. It includes the sour
 
 The comparison joins by stable key. It checks the role, native trial UUID, original view digest and `source_decision_sha256`. The last field covers the entire validated source record, including the private reference and the observed action. Changing the answer key cannot produce an apparent policy gain. Independently reannotated records need a separate study, even if their visible bytes match. Count newly correct, newly incorrect and unchanged decisions separately. Do not treat individual decisions as independent native trials.
 
+`--transform-file` accepts a `seatlab.context/v1` recipe. It can truncate arrays or replace an exact field value. The transformation works on the actor's view only. It cannot read the native action or score. The replay records the recipe's canonical digest. See the [working example](../examples/meeting-first8.json).
+
+Use `calibrate` rather than `compare` for **different** native trials. Its pair manifest binds each arm to the underlying case hash, native UUID, and whole decision digest. Generate predictions from the source arms only. Provide the same recipe to independently derive the predicted input. A match requires an acknowledged native target view. A matching action alone is not evidence that the input matched. See the [native calibration protocol](native-calibration.md).
+
 ## Trust boundary
 
 The adapter and source files are trusted. Hashes detect mismatches, not forgery. The released experimental data is synthetic. Changing a view or a private answer without a new provenance record produces a different study. The external executable must be trusted too: a restricted data interface and environment are not operating-system isolation.
