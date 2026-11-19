@@ -29,6 +29,7 @@ ASSETS = {
     "pettingzoo.html": ("v0.10.0", "81c9b8fb96ea50f52e3b296c3bba007e05ce58c02a7437b9bb468f8f2ab81ca3"),
     "policy-windows.html": ("v0.11.0", "e34f9e39a81b4fa100e1fc14b6ba8032d75d2754688534b875ff109f855155ce"),
     "speaker-listener.html": ("v0.11.0", "c18907668db9d4747ef113ade165f35f908ece07666b6a528bc5f2200ba67e31"),
+    "role-trajectories.html": ("v0.12.0", "9d4270491a836cc855e0392d4e55166c687d649d63f390ece022cb33db4adec9"),
 }
 REQUIRED_PAGES = ("index.html",)
 OPTIONAL_PAGES = ("style.css",)
