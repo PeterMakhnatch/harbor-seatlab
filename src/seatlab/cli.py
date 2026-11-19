@@ -24,6 +24,7 @@ from .study_relations import export_relations
 from .sufficiency import audit_context
 from .tape import digest
 from .team_alignment import team_align
+from .trajectory import role_trajectory
 from .viewwork import act
 from .windows import verify_windows
 
@@ -153,6 +154,16 @@ def main(argv: Sequence[str] | None = None) -> int:
     joint.add_argument(
         "--input-paths", metavar="N", type=int, help="show up to N changed paths"
     )
+    trajectory = commands.add_parser(
+        "role-trajectory",
+        help="compare one participant's views and actions on two observed schedules",
+    )
+    trajectory.add_argument("source", type=Path)
+    trajectory.add_argument("target", type=Path)
+    trajectory.add_argument("--source-order", type=Path, required=True)
+    trajectory.add_argument("--target-order", type=Path, required=True)
+    trajectory.add_argument("--role", required=True)
+    trajectory.add_argument("--field", action="append", metavar="JSON_POINTER", help="select an observed field; repeatable")
     audit = commands.add_parser(
         "context-audit",
         help="find recorded actions that selected context fields cannot distinguish",
@@ -259,6 +270,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                 source_order=args.source_order,
                 target_order=args.target_order,
                 input_paths=args.input_paths,
+            )
+        elif args.command == "role-trajectory":
+            result = role_trajectory(
+                args.source, args.target, source_order=args.source_order,
+                target_order=args.target_order, role=args.role, fields=args.field,
             )
         elif args.command == "context-audit":
             result = audit_context(
