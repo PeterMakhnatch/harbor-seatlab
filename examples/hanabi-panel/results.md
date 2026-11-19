@@ -20,3 +20,11 @@ The [native results](local-native.json) include the 4 UUIDs, game scores and dec
 Download the [release](https://github.com/PeterMakhnatch/harbor-seatlab/releases/tag/v0.15.0). The source and candidate bundles contain only recordings and JSON. Install the release wheel in a virtual environment. Extract the two published bundles into separate directories. `receipts.json` holds both canonical study and design digests. Run the final `seatlab study recheck` command in the [author guide](../../docs/from-matrix.md) with the published pins. Do not replace the pins with hashes of an untrusted download.
 
 To build new evidence, run the [native workflow](../../.github/workflows/native-hanabi.yml) in a fork. To adapt a different task, start with the [generic author guide](../../docs/from-matrix.md), not the Hanabi converter.
+
+## Independent Linux repeat
+
+The [hosted workflow](https://github.com/PeterMakhnatch/harbor-seatlab/actions/runs/44560679986) rebuilt the frozen source. Its worklist requested 4 native worlds, not 8 separate jobs for 8 criteria. The 4 runner jobs overlapped for 55 seconds. Each ran 1 team on stock Olam Harbor. A separate job checked the exported private views, accepted actions, and world order.
+
+The 4 Linux worlds produced 139 decisions. All 8 criteria stayed stable; none changed or became unknown. Their UUIDs differ from the 32 original worlds and all 4 local repeats. This repeats one selected deck, not all 8 decks. Agreement of these criteria is not proof of a better team.
+
+The [v0.15.0 release](https://github.com/PeterMakhnatch/harbor-seatlab/releases/tag/v0.15.0) contains the 3 portable bundles, all pins and both rechecks. The [task-owner guide](../../docs/from-matrix.md) shows how to use your own world recordings instead.
