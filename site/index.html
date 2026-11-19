@@ -100,6 +100,16 @@
       <p>The exact selection needs 2 worlds, or 10 native trials at 5 teams per world. There are 35 minimum pairs. SeatLab chooses the first by case label. This is a regression panel, not a population estimate.</p>
       <p class="go"><a href="observed-panel.html">Inspect the selected cases &rarr;</a> <a class="src" href="holdout.html">See all 96 native measurements</a> <a class="src" href="https://github.com/PeterMakhnatch/harbor-seatlab/blob/v0.13.0/docs/measured-panel.md">Run it offline</a></p>
     </article>
+    <article id="use-on-your-task" class="story" aria-labelledby="maintainer-title">
+      <p class="kicker">For Harbor task maintainers</p>
+      <h3 id="maintainer-title">Check your own agent or context change in CI</h3>
+      <p>Keep Harbor as the runner and scorer. Give SeatLab the observations and actions your world recorded for each role. A final reward alone is not enough.</p>
+      <ol>
+        <li><a href="https://github.com/PeterMakhnatch/harbor-seatlab/blob/v0.17.0/docs/from-matrix.md">Task owner: freeze your team configurations and select the native cases.</a></li>
+        <li><a href="https://github.com/PeterMakhnatch/harbor-seatlab/releases/tag/v0.17.0">Runner owner: collect independent workers and detect a return filed under the wrong job.</a> Try the real control offline, without Docker or a model key.</li>
+        <li><a href="https://github.com/PeterMakhnatch/harbor-seatlab/blob/03f3ead4adfaa334a4e979d22b0ffebc9e1dcf0e/examples/eval-lab/README.md">Eval Lab user: supply native trial IDs and count each shared reward once.</a> Eval Lab is optional.</li>
+      </ol>
+    </article>
   </section>
 
   <section class="split wrap" aria-labelledby="sv-title">
