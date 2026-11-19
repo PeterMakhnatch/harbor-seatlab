@@ -1,6 +1,12 @@
 name: Run two native Mindustry chat attempts; a server record is not a read
 on:
   workflow_dispatch:
+    inputs:
+      scope:
+        description: Run the reference or both sides of Olam's portable-build change
+        type: choice
+        options: [reference, portable-build-change]
+        default: reference
   pull_request:
     types: [opened]
     paths:
@@ -12,6 +18,13 @@ jobs:
   native:
     # Manual runs, or pull requests from this repository only.
     if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    strategy:
+      fail-fast: false
+      matrix: >-
+        ${{ fromJSON((github.event_name == 'pull_request' || inputs.scope == 'portable-build-change')
+          && '{"include":[{"label":"before-portable-build","task":"124b275aa9e248ca18836432dc51658b4ac4f573"},{"label":"portable-build","task":"6ee0648ce6b1e5c5bbcc6616e736ca54b5c42dac"}]}'
+          || '{"include":[{"label":"reference","task":"1374e46a229c73763a1e46f347f67676ff1b434b"}]}') }}
+    name: Native chat / ${{ matrix.label }}
     runs-on: ubuntu-latest
     timeout-minutes: 46
     steps:
@@ -27,7 +40,7 @@ jobs:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
           repository: olamlabs/multi-agent-mindustry
-          ref: 1374e46a229c73763a1e46f347f67676ff1b434b
+          ref: ${{ matrix.task }}
           path: original-game
           persist-credentials: false
       - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
@@ -46,14 +59,17 @@ jobs:
             "$PWD/original-game/mindustry-endless-survival" \
             --harbor "$PWD/stock-olam/.venv/bin/harbor" \
             --out "$RUNNER_TEMP/mindustry-chat"
+          jq -n --arg task "$(git -C original-game rev-parse HEAD)" --arg harbor "$(git -C stock-olam rev-parse HEAD)" \
+            '{task_commit:$task,harbor_commit:$harbor}' > "$RUNNER_TEMP/mindustry-chat/public/revision.json"
           jq -e '(.arms | keys) == ["no-read","read"]' \
             "$RUNNER_TEMP/mindustry-chat/public/summary.json"
       - name: Retain public summaries only
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: mindustry-chat-public
+          name: ${{ matrix.label == 'reference' && 'mindustry-chat-public' || format('mindustry-chat-{0}', matrix.label) }}
           path: |
+            ${{ runner.temp }}/mindustry-chat/public/revision.json
             ${{ runner.temp }}/mindustry-chat/public/plan.json
             ${{ runner.temp }}/mindustry-chat/public/read.json
             ${{ runner.temp }}/mindustry-chat/public/no-read.json
