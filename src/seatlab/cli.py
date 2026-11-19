@@ -18,7 +18,9 @@ from .partition import partition
 from .prefix import prefix
 from .replay import replay
 from .report import compare, describe
+from .study import StudyMismatch, seal_study, verify_study
 from .sufficiency import audit_context
+from .tape import digest
 from .viewwork import act
 
 
@@ -45,6 +47,14 @@ def _transform_arguments(parser: argparse.ArgumentParser) -> None:
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="seatlab", description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
+    study = commands.add_parser("study", help="seal or verify a portable native study")
+    study_commands = study.add_subparsers(dest="study_action", required=True)
+    seal = study_commands.add_parser("seal", help="record file and analysis digests")
+    seal.add_argument("recipe", type=Path)
+    seal.add_argument("--out", type=Path, required=True, help="new manifest beside the recipe")
+    verify = study_commands.add_parser("verify", help="recompute the registered analyses")
+    verify.add_argument("manifest", type=Path)
+    verify.add_argument("--expect-sha256", help="trusted canonical manifest digest")
     ingest = commands.add_parser(
         "from-handoff", help="import a public native Dispatch Handoff study"
     )
@@ -159,7 +169,16 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
     exit_code = 0
     try:
-        if args.command == "from-handoff":
+        if args.command == "study":
+            if args.study_action == "seal":
+                manifest = seal_study(args.recipe, args.out)
+                result = {
+                    "schema": "seatlab.study-seal/v1",
+                    "study_sha256": digest(manifest),
+                }
+            else:
+                result = verify_study(args.manifest, expect_sha256=args.expect_sha256)
+        elif args.command == "from-handoff":
             result = from_handoff(args.bundle, args.panel, args.out)
         elif args.command == "describe":
             result = describe(args.tape)
@@ -217,6 +236,9 @@ def main(argv: Sequence[str] | None = None) -> int:
                     ),
                     timeout=args.timeout_seconds,
                 )
+    except StudyMismatch as error:
+        print(f"seatlab: {error}", file=sys.stderr)
+        return 1
     except (OSError, ValueError) as error:
         print(f"seatlab: {error}", file=sys.stderr)
         return 2

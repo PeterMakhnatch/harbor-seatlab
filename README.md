@@ -75,6 +75,10 @@ Use `seatlab partition --views-only` to give each worker only projected actor vi
 
 The [receipt board](examples/receipt-board/) is a complete 2-seat Olam task. Run 2 stock trials, export the views the actors acknowledged, and check a detached policy against the second trial. The [author guide](docs/authoring.md) shows the 3 Python helpers. The offline path needs no Harbor installation. The native path uses Docker and no model key.
 
+## Verify someone else's study offline
+
+Run `seatlab study verify study.json --expect-sha256 "$STUDY_SHA256"`. It checks the original input bytes and recomputes each registered analysis. It runs no code from the study. The [portable study guide](docs/portable-studies.md) shows how to publish one. A verified report can still contain a failed policy or missing evidence.
+
 ## What belongs where
 
 | Job | Owner |

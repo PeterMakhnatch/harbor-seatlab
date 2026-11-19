@@ -1,0 +1,28 @@
+{
+  "schema": "seatlab.study-recipe/v1",
+  "checks": [
+    {
+      "id": "projected-first-eight",
+      "kind": "calibration",
+      "tape": "meeting.jsonl",
+      "predictions": "projected.jsonl",
+      "pairs": "meeting-pairs.json",
+      "context": "meeting-first8.json"
+    },
+    {
+      "id": "unchanged-input-control",
+      "kind": "calibration",
+      "tape": "meeting.jsonl",
+      "predictions": "identity.jsonl",
+      "pairs": "meeting-pairs.json"
+    },
+    {
+      "id": "interactive-native-pair",
+      "kind": "alignment",
+      "source": "cursor-source.jsonl",
+      "target": "cursor-target.jsonl",
+      "pairs": "cursor-pairs.json",
+      "input_paths": 4
+    }
+  ]
+}
