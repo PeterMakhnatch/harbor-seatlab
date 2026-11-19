@@ -26,3 +26,14 @@ jobs:
           seatlab replay examples/meeting.jsonl --out "$out/observed.jsonl" --policy observed
           seatlab replay examples/meeting.jsonl --out "$out/solver.jsonl" --policy intersection
           seatlab compare "$out/observed.jsonl" "$out/solver.jsonl"
+      - name: Stop at the first changed decision on real interactive histories
+        run: |
+          out=$(mktemp -d)
+          seatlab prefix examples/cursor-source.jsonl \
+            --exec "$(command -v python)" "$PWD/examples/cursor_policy.py" \
+            --budget-rounds 8 > "$out/forecast.json"
+          jq -e '
+            .counts.diverged == 1 and .counts.matched_closed == 1 and
+            .counts.withheld_suffix == 15 and
+            any(.episodes[]; .id == "calendar:2-1:cursor:m1" and .boundary_turn == 9)
+          ' "$out/forecast.json"
