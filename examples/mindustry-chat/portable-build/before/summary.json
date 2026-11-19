@@ -1,0 +1,19 @@
+{
+  "arms": {
+    "no-read": {
+      "evidence_exit_status": 0,
+      "evidence_present": true,
+      "evidence_timed_out": false,
+      "harbor_exit_status": 0,
+      "harbor_timed_out": false
+    },
+    "read": {
+      "evidence_exit_status": 0,
+      "evidence_present": true,
+      "evidence_timed_out": false,
+      "harbor_exit_status": 0,
+      "harbor_timed_out": false
+    }
+  },
+  "schema": "seatlab.mindustry-chat-summary/v1"
+}

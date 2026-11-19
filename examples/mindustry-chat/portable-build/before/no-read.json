@@ -1,0 +1,23 @@
+{
+  "arm": "no-read",
+  "evidence": {
+    "journal": "ok",
+    "receiver_receipt": "ok",
+    "result": "ok",
+    "sender_receipt": "ok"
+  },
+  "facts": {
+    "dependent_reply_accepted": false,
+    "recipient_explicit_read": false,
+    "sender_saw_ack": false,
+    "transmit_accepted": true
+  },
+  "native_reward": null,
+  "native_reward_disposition": "reward_withheld_not_valid",
+  "native_trial_id": "468cf54e-95c1-4ed3-865e-eee549f19959",
+  "notes": "no-read does not show the world withheld the message; a living core when the programs stop is not a score of zero",
+  "protocol_result": "no_read_observed",
+  "reasons": [],
+  "schema": "seatlab.native-chat-evidence/v1",
+  "status": "complete"
+}

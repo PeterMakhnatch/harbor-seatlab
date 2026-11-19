@@ -1,0 +1,103 @@
+{
+  "after": {
+    "arms": {
+      "no-read": {
+        "evidence": "complete",
+        "execution": {
+          "evidence_exit_status": 0,
+          "evidence_present": true,
+          "evidence_timed_out": false,
+          "harbor_exit_status": 0,
+          "harbor_timed_out": false
+        },
+        "facts": {
+          "dependent_reply_accepted": false,
+          "recipient_explicit_read": false,
+          "sender_saw_ack": false,
+          "transmit_accepted": true
+        },
+        "native_trial_id": "83f5e3b8-16a6-44f9-873b-4b0b078f332f"
+      },
+      "read": {
+        "evidence": "complete",
+        "execution": {
+          "evidence_exit_status": 0,
+          "evidence_present": true,
+          "evidence_timed_out": false,
+          "harbor_exit_status": 0,
+          "harbor_timed_out": false
+        },
+        "facts": {
+          "dependent_reply_accepted": true,
+          "recipient_explicit_read": true,
+          "sender_saw_ack": true,
+          "transmit_accepted": true
+        },
+        "native_trial_id": "fa038b9e-c8de-40ad-b0a8-28d6e7efdd41"
+      }
+    },
+    "granted_cpus": 4,
+    "task_commit": "6ee0648ce6b1e5c5bbcc6616e736ca54b5c42dac"
+  },
+  "before": {
+    "arms": {
+      "no-read": {
+        "evidence": "complete",
+        "execution": {
+          "evidence_exit_status": 0,
+          "evidence_present": true,
+          "evidence_timed_out": false,
+          "harbor_exit_status": 0,
+          "harbor_timed_out": false
+        },
+        "facts": {
+          "dependent_reply_accepted": false,
+          "recipient_explicit_read": false,
+          "sender_saw_ack": false,
+          "transmit_accepted": true
+        },
+        "native_trial_id": "468cf54e-95c1-4ed3-865e-eee549f19959"
+      },
+      "read": {
+        "evidence": "complete",
+        "execution": {
+          "evidence_exit_status": 0,
+          "evidence_present": true,
+          "evidence_timed_out": false,
+          "harbor_exit_status": 0,
+          "harbor_timed_out": false
+        },
+        "facts": {
+          "dependent_reply_accepted": true,
+          "recipient_explicit_read": true,
+          "sender_saw_ack": true,
+          "transmit_accepted": true
+        },
+        "native_trial_id": "c8dae2f1-88b5-4690-9049-ca84b7f65a42"
+      }
+    },
+    "granted_cpus": 4,
+    "task_commit": "124b275aa9e248ca18836432dc51658b4ac4f573"
+  },
+  "counts": {
+    "changed": 0,
+    "stable": 8,
+    "unknown": 0
+  },
+  "facts": {
+    "no-read": {
+      "dependent_reply_accepted": "stable",
+      "recipient_explicit_read": "stable",
+      "sender_saw_ack": "stable",
+      "transmit_accepted": "stable"
+    },
+    "read": {
+      "dependent_reply_accepted": "stable",
+      "recipient_explicit_read": "stable",
+      "sender_saw_ack": "stable",
+      "transmit_accepted": "stable"
+    }
+  },
+  "harbor_commit": "4a194016336ccd1ce3fcc799b10158ca0375eb63",
+  "schema": "seatlab.mindustry-task-revision/v1"
+}
