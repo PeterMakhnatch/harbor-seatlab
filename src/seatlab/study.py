@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import cast
 
@@ -151,8 +151,17 @@ def seal_study(recipe: Path, out: Path) -> dict[str, object]:
     return cast(dict[str, object], manifest)
 
 
-def verify_study(manifest: Path, *, expect_sha256: str | None = None) -> dict[str, object]:
-    """Verify a study manifest's optional pin, file digests, and derived reports."""
+def _verify_reports(
+    manifest: Path,
+    *,
+    expect_sha256: str | None,
+    on_check: Callable[[Check, dict[str, object], str], None] | None = None,
+) -> dict[str, object]:
+    """Verify once, optionally consuming each report after its digest matches.
+
+    The pin is checked before any referenced file is opened. Every check runs inside one
+    private snapshot, so callers that need report contents never read the bundle twice.
+    """
     if expect_sha256 is not None and not valid_sha256(expect_sha256):
         raise wire.TapeError(
             "expect_sha256 must be a lowercase 64-character hex SHA-256 digest"
@@ -182,9 +191,11 @@ def verify_study(manifest: Path, *, expect_sha256: str | None = None) -> dict[st
                     f"does not match manifest {expected_report}"
                 )
             check_summaries.append(_check_summary(check, report, report_sha256))
+            if on_check is not None:
+                on_check(check, report, report_sha256)
         total_bytes = sum(file_receipts[path]["bytes"] for path in paths)
 
-    return {
+    summary: dict[str, object] = {
         "schema": _VERIFICATION_SCHEMA,
         "status": "verified",
         "study_sha256": study_sha256,
@@ -192,3 +203,9 @@ def verify_study(manifest: Path, *, expect_sha256: str | None = None) -> dict[st
         "bytes": total_bytes,
         "checks": check_summaries,
     }
+    return summary
+
+
+def verify_study(manifest: Path, *, expect_sha256: str | None = None) -> dict[str, object]:
+    """Verify a study manifest's optional pin, file digests, and derived reports."""
+    return _verify_reports(manifest, expect_sha256=expect_sha256)
