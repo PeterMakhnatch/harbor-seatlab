@@ -1,0 +1,12 @@
+{
+  "arms": [
+    "read",
+    "no-read"
+  ],
+  "attempt_timeout_seconds": 1080,
+  "cpu_override": true,
+  "granted_cpus": 4,
+  "participants": 2,
+  "retries": 0,
+  "schema": "seatlab.mindustry-chat-plan/v1"
+}
