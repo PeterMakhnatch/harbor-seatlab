@@ -30,3 +30,11 @@ seatlab compare "$out/native.jsonl" "$out/solver.jsonl"
 ```
 
 SHA-256 of the distributed tape: `3dc7875f13138acf663e19e444ce6989525713c3e837d4d2338c60d6ca809076`. The score distinguishes original reference membership from physical feasibility. A null action does not produce a scheduled time. The calendar data and its derived reports retain their [original MIT license](MASBENCH-LICENSE.txt).
+
+## Interactive scheduling
+
+`cursor-source.jsonl` contains the native coordinator histories for cases `2/1` and `5/1`. They come from the [interactive calendar study](https://github.com/PeterMakhnatch/harbor-multiagent/blob/71f81e5a1634caa31cba4b650c90f53787fe5113/adapters/masbench-scheduling/interactive-results.md). Each of the 5 participants holds its own calendar. The coordinator receives a new set of replies after each accepted query. The [episode exporter](https://github.com/PeterMakhnatch/harbor-multiagent/blob/71f81e5a1634caa31cba4b650c90f53787fe5113/adapters/masbench-scheduling/export_episodes.py) checks each view acknowledgment and action against the retained native history. The source file SHA-256 is `e96d3352a027b02133e765616bf0c9cdb2edf0934db22e1a13a64e3dc5fa0bfc`.
+
+`cursor_policy.py` is a separate policy implementation. Without `--budget-rounds`, it continues until it finds a common time or proves none remains. With `--budget-rounds 8`, it stops if the first 8 exchanges do not resolve the meeting. This is a budget on exchanges, not on tokens or seconds. The bundled material retains the [MASBench MIT notice](MASBENCH-LICENSE.txt).
+
+`cursor-target.jsonl` contains separate native trials for those same 2 cases under the eight-round budget. `cursor-pairs.json` binds both arms by case, role, independent trial UUID and episode digest. The target file SHA-256 is `de9748fac4d5901dc830a64f0a3d212e3b9b55316ff3c7e1d00683d2cc1ec9ab`. The [registered forecast and 24-pair result](https://github.com/PeterMakhnatch/harbor-multiagent/blob/experiments/seatlab-cursor-budget/adapters/masbench-scheduling/prefix-results.md) distinguish a replay stopping at the boundary from a genuine target outcome.

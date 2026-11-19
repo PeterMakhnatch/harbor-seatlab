@@ -7,7 +7,7 @@ import selectors
 import signal
 import subprocess
 import tempfile
-from collections.abc import Iterable, Iterator
+from collections.abc import Callable, Iterable, Iterator
 from hashlib import sha256
 from itertools import pairwise
 from pathlib import Path
@@ -195,7 +195,13 @@ def _close_process(process: subprocess.Popen[bytes]) -> None:
         pass
 
 
-def _external(argv: tuple[str, ...], data: bytes, timeout: float) -> wire.Action:
+def _external(
+    argv: tuple[str, ...],
+    data: bytes,
+    timeout: float,
+    *,
+    on_spawn: Callable[[], None] | None = None,
+) -> wire.Action:
     try:
         with tempfile.TemporaryDirectory(prefix="seatlab-") as cwd:
             deadline = monotonic() + timeout
@@ -213,6 +219,8 @@ def _external(argv: tuple[str, ...], data: bytes, timeout: float) -> wire.Action
             except (OSError, ValueError, subprocess.SubprocessError):
                 raise _PolicyFailure("spawn_failed") from None
             try:
+                if on_spawn is not None:
+                    on_spawn()
                 output = _exchange(process, data + b"\n", deadline)
             except OSError:
                 raise _PolicyFailure("policy_failed") from None
