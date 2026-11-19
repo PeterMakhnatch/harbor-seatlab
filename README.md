@@ -91,6 +91,12 @@ For continuous integration, use the [pinned GitHub Action](docs/github-action.md
 
 Use [`seatlab study relations`](docs/study-relations.md) to join those comparisons to Eval Lab by native trial UUID. The [measured job example](examples/eval-lab/measured.md) keeps 4 role executions separate from 2 shared rewards. It needs no game rerun.
 
+## Choose a short native regression run
+
+Use [`seatlab study panel`](docs/coverage-panels.md) when running every team on every world is too expensive. Name the observed behaviors the short run must exercise. SeatLab verifies the source study, then selects the fewest recorded worlds that cover those behaviors. It reports what no world demonstrated and what the recordings could not measure.
+
+In the [12-world worked example](docs/measured-panel.md), a listener that ignores messages matches all informed moves on 5 worlds and differs on 7. Only 2 worlds are needed to exercise all 9 specified behaviors. A repeat of all 5 teams then needs 10 native trials rather than 60. Use the full cohort for performance estimates; the selected panel is a regression check.
+
 ## What belongs where
 
 | Job | Owner |

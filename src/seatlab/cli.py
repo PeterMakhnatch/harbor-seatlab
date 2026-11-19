@@ -14,6 +14,8 @@ from .context import ContextSpec
 from .handoff import from_handoff
 from .inspector import write_inspector
 from .merge import merge
+from .panel import panel_report
+from .panel_html import write_panel_html
 from .partition import partition
 from .prefix import prefix
 from .replay import replay
@@ -53,7 +55,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="seatlab", description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
     study = commands.add_parser(
-        "study", help="seal, verify or export relations of a portable native study"
+        "study", help="seal, verify, join or select cases from a portable native study"
     )
     study_commands = study.add_subparsers(dest="study_action", required=True)
     seal = study_commands.add_parser("seal", help="record file and analysis digests")
@@ -77,6 +79,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     relations.add_argument(
         "--out", type=Path, required=True, help="new relation file (JSONL)"
     )
+    panel = study_commands.add_parser(
+        "panel", help="find a smallest case set that covers the recorded behavior criteria"
+    )
+    panel.add_argument("manifest", type=Path)
+    panel.add_argument("--expect-sha256", required=True, help="trusted canonical manifest digest")
+    panel.add_argument("--design", type=Path, required=True, help="explicit case and criterion map")
+    panel.add_argument("--html", type=Path, help="also write a new, self-contained panel page")
     ingest = commands.add_parser(
         "from-handoff", help="import a public native Dispatch Handoff study"
     )
@@ -237,6 +246,10 @@ def main(argv: Sequence[str] | None = None) -> int:
                 result = export_relations(
                     args.manifest, args.out, expect_sha256=args.expect_sha256
                 )
+            elif args.study_action == "panel":
+                result = panel_report(args.manifest, args.design, expect_sha256=args.expect_sha256)
+                if args.html is not None:
+                    write_panel_html(result, args.html)
             else:
                 result = verify_study(args.manifest, expect_sha256=args.expect_sha256)
                 if args.html is not None:
