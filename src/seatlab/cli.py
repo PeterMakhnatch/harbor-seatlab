@@ -109,6 +109,29 @@ def main(argv: Sequence[str] | None = None) -> int:
         type=int,
         help="list at most N changed JSON Pointer paths at the first input boundary (1–128)",
     )
+    audit = commands.add_parser(
+        "context-audit",
+        help="find recorded actions that selected context fields cannot distinguish",
+    )
+    audit.add_argument("train", type=Path, help="native role episodes (JSONL)")
+    audit.add_argument(
+        "--heldout", type=Path, help="optional episodes from disjoint cases and trials"
+    )
+    fields = audit.add_mutually_exclusive_group()
+    fields.add_argument(
+        "--field",
+        action="append",
+        metavar="POINTER",
+        help="keep a JSON Pointer from the current role view; repeatable",
+    )
+    fields.add_argument("--no-fields", action="store_true", help="use only role identity")
+    audit.add_argument(
+        "--witnesses",
+        type=int,
+        default=3,
+        metavar="N",
+        help="show receipts for at most N conflicting inputs (0–100)",
+    )
     pair = commands.add_parser(
         "compare", help="compare complete results against the same recorded views"
     )
@@ -157,6 +180,13 @@ def main(argv: Sequence[str] | None = None) -> int:
             result = compare(args.baseline, args.candidate)
         elif args.command == "align":
             result = align(args.source, args.target, args.pairs, input_paths=args.input_paths)
+        elif args.command == "context-audit":
+            result = audit_context(
+                args.train,
+                fields=() if args.no_fields else args.field,
+                heldout=args.heldout,
+                witnesses=args.witnesses,
+            )
         elif args.command == "calibrate":
             context = ContextSpec.load(args.transform_file) if args.transform_file else None
             result = calibrate(args.tape, args.predictions, args.pairs, context=context)
