@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="referrer" content="no-referrer">
+<title>SeatLab evidence gallery: same payoff, different decisions</title>
+<meta name="description" content="Verified native Harbor team studies. Four Connect Four games pay the same, yet two end in 7 moves and two in 19. SeatLab finds the first decision that differs.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site">
+  <div class="wrap bar">
+    <a class="brand" href="./" aria-current="page">SeatLab <span>evidence gallery</span></a>
+    <nav aria-label="Live reports">
+      <ul>
+        <li><a href="pettingzoo.html">PettingZoo</a></li>
+        <li><a href="calendar.html">Calendar</a></li>
+        <li><a href="team.html">Hanabi &amp; kitchen</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero wrap" aria-labelledby="hero-title">
+    <p class="eyebrow">Native Harbor runs &middot; Connect Four &middot; seed 19</p>
+    <h1 id="hero-title">Same payoff, different decisions.</h1>
+    <p class="lede">All 4 Connect Four teams earn the same final payoff: p0 <strong>+1</strong>, p1 <strong>&minus;1</strong>. Two games end in 7 moves. Two need 19. A payoff-only comparison sees 4 identical results. SeatLab reads the moves in the order the world accepted them and finds the first decision that differs: <strong>move 2</strong>.</p>
+
+    <figure class="example" aria-labelledby="ex-cap">
+      <figcaption id="ex-cap">Low/low against low/high. Only the second player (p1) changes. Both teams start from the same view, and p0 makes the same first move.</figcaption>
+
+      <div class="strip-row">
+        <p class="strip-label"><span>p0 low &middot; p1 low</span> <span class="meta">19 moves &middot; p0 +1</span></p>
+        <ol class="strip" aria-label="Low/low game, 19 moves">
+          <li class="p0 same" aria-label="Move 1, p0, same">1</li>
+          <li class="p1 diff" aria-label="Move 2, p1, first changed action">2</li>
+          <li class="p0">3</li><li class="p1">4</li><li class="p0">5</li><li class="p1">6</li><li class="p0">7</li><li class="p1">8</li><li class="p0">9</li><li class="p1">10</li><li class="p0">11</li><li class="p1">12</li><li class="p0">13</li><li class="p1">14</li><li class="p0">15</li><li class="p1">16</li><li class="p0">17</li><li class="p1">18</li><li class="p0 win" aria-label="Move 19, p0 wins">19</li>
+        </ol>
+      </div>
+      <div class="strip-row">
+        <p class="strip-label"><span>p0 low &middot; p1 high</span> <span class="meta">7 moves &middot; p0 +1</span></p>
+        <ol class="strip" aria-label="Low/high game, 7 moves">
+          <li class="p0 same" aria-label="Move 1, p0, same">1</li>
+          <li class="p1 diff" aria-label="Move 2, p1, first changed action">2</li>
+          <li class="p0">3</li><li class="p1">4</li><li class="p0">5</li><li class="p1">6</li><li class="p0 win" aria-label="Move 7, p0 wins">7</li>
+        </ol>
+      </div>
+      <ul class="legend" aria-label="Legend">
+        <li><span class="key same" aria-hidden="true"></span> same input and action</li>
+        <li><span class="key diff" aria-hidden="true"></span> first changed action</li>
+        <li><span class="key win" aria-hidden="true"></span> winning move</li>
+      </ul>
+    </figure>
+
+    <div class="cta">
+      <a class="button" href="pettingzoo.html">Open the live PettingZoo report</a>
+      <a class="quiet" href="https://github.com/PeterMakhnatch/harbor-multiagent/blob/feat/seatlab-pettingzoo/adapters/pettingzoo-seats/results.md">Read the source results</a>
+    </div>
+
+    <details class="native">
+      <summary>The 4 native Connect Four trials</summary>
+      <div class="scroll" tabindex="0" role="region" aria-label="Connect Four trials table">
+      <table>
+        <caption>Each row is one stock Harbor trial. Payoffs are game returns, not the Harbor completion scalar.</caption>
+        <thead>
+          <tr><th scope="col">Cell</th><th scope="col">p0 / p1</th><th scope="col" class="n">Moves</th><th scope="col" class="n">Payoff p0 / p1</th><th scope="col">Native trial ID</th></tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">connect-ll-a</th><td>low / low</td><td class="n">19</td><td class="n">+1 / &minus;1</td><td><code>53f13b3a-9f52-44b7-9b45-f6dd142183d3</code></td></tr>
+          <tr><th scope="row">connect-ll-b</th><td>low / low</td><td class="n">19</td><td class="n">+1 / &minus;1</td><td><code>0b4a922f-bb21-4a78-8be3-0409226a10f8</code></td></tr>
+          <tr><th scope="row">connect-lh</th><td>low / high</td><td class="n">7</td><td class="n">+1 / &minus;1</td><td><code>85bead9e-9fa7-4f71-856e-298a721ec8e2</code></td></tr>
+          <tr><th scope="row">connect-hl</th><td>high / low</td><td class="n">7</td><td class="n">+1 / &minus;1</td><td><code>4108afc9-96ff-492a-abd7-2f40a190f7c8</code></td></tr>
+        </tbody>
+      </table>
+      </div>
+      <p class="fine">Source: <a href="https://raw.githubusercontent.com/PeterMakhnatch/harbor-multiagent/feat/seatlab-pettingzoo/adapters/pettingzoo-seats/results/primary.json"><code>results/primary.json</code></a>. All 8 primary cells match a direct run of the official PettingZoo API.</p>
+    </details>
+  </section>
+
+  <section class="split wrap" aria-labelledby="sv-title">
+    <h2 id="sv-title">Two questions, kept apart</h2>
+    <div class="pair">
+      <div class="half">
+        <h3><span class="tag score">Score</span> What did the team earn?</h3>
+        <p>Harbor runs the world and verifies the shared result. A score tells you the outcome. It does not tell you which member did something different, or when.</p>
+      </div>
+      <div class="half">
+        <h3><span class="tag process">Process</span> How did the team get there?</h3>
+        <p>SeatLab compares what each participant could see and what it did, in world order. It reports the first step where an input or action differs. It does not assign a reward to a future nobody ran.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="stories wrap" aria-labelledby="stories-title">
+    <h2 id="stories-title">Three live reports</h2>
+    <p class="sub">Each report opens in your browser. It needs no account, server, or script.</p>
+
+    <article class="story" aria-labelledby="s1">
+      <p class="kicker">PettingZoo &middot; 17 registered native attempts</p>
+      <h3 id="s1"><a href="pettingzoo.html">Equal returns hide a 12-move gap</a></h3>
+      <dl>
+        <div><dt><span class="tag score">Score</span></dt><dd>All 4 Connect Four games pay p0 +1. One deliberately invalid program returns a boolean, gets no payoff, and its command still exits 0.</dd></div>
+        <div><dt><span class="tag process">Process</span></dt><dd>13 pair comparisons: 8 complete matches and 5 changed steps. 16 of 17 attempts complete across macOS and a fresh Ubuntu Docker repeat, where 31/31 views and actions match.</dd></div>
+      </dl>
+      <p class="go"><a href="pettingzoo.html">Open the PettingZoo report <span aria-hidden="true">&rarr;</span></a> <a class="src" href="https://github.com/PeterMakhnatch/harbor-multiagent/blob/feat/seatlab-pettingzoo/adapters/pettingzoo-seats/results.md">Source</a></p>
+    </article>
+
+    <article class="story" aria-labelledby="s2">
+      <p class="kicker">Calendar &middot; 400 native trials &middot; 200 published five-person cases</p>
+      <h3 id="s2"><a href="calendar.html">A forecast can be exact and the decision still wrong</a></h3>
+      <dl>
+        <div><dt><span class="tag score">Score</span></dt><dd>With full availability lists, teams pick the correct time in 200/200 cases. When each of 5 members reports only its first 8 times, only 15/200 do.</dd></div>
+        <div><dt><span class="tag process">Process</span></dt><dd>A prediction built only from the source runs reproduces 200/200 target decisions, including 185 deliberate nulls. It never reads the target run.</dd></div>
+      </dl>
+      <p class="go"><a href="calendar.html">Open the calendar report <span aria-hidden="true">&rarr;</span></a> <a class="src" href="https://github.com/PeterMakhnatch/harbor-multiagent/blob/b5f7a33511775604f9507e64acb37f11e23bbcab/adapters/masbench-scheduling/cohort-results.md">Source</a></p>
+    </article>
+
+    <article class="story" aria-labelledby="s3">
+      <p class="kicker">Hanabi &amp; kitchen &middot; 32 Hanabi + 6 kitchen trials</p>
+      <h3 id="s3"><a href="team.html">Every team scores zero, yet the histories diverge</a></h3>
+      <dl>
+        <div><dt><span class="tag score">Score</span></dt><dd>On 7 of 8 matched Hanabi decks, every team scores zero.</dd></div>
+        <div><dt><span class="tag process">Process</span></dt><dd>The decision histories still diverge. The kitchen accepts 2 moves at once; the card game accepts 1. Sorting logs by file time is not a substitute for world order.</dd></div>
+      </dl>
+      <p class="go"><a href="team.html">Open the team report <span aria-hidden="true">&rarr;</span></a> <a class="src" href="https://github.com/PeterMakhnatch/harbor-multiagent/blob/1f9da5ecb0267e25d60bc034404a4601902f7504/adapters/hanabi-crossplay/results.md">Source</a></p>
+    </article>
+  </section>
+
+  <section class="quick wrap" aria-labelledby="qs-title">
+    <h2 id="qs-title">Quickstart: check the numbers, then record your own task</h2>
+    <ol class="steps">
+      <li>
+        <h3>Verify the PettingZoo study</h3>
+        <p>Use Python 3.11 or later. No Docker, Harbor, or API key. The verifier checks the archive bytes and recomputes the 13 comparisons. It runs no code from the study.</p>
+<pre tabindex="0" aria-label="Verification commands"><code>work=$(mktemp -d)
+python3 -m venv "$work/venv"
+r=https://github.com/PeterMakhnatch/harbor-seatlab/releases/download/v0.10.0
+"$work/venv/bin/python" -m pip install --no-deps \
+  "$r/harbor_seatlab-0.10.0-py3-none-any.whl"
+curl -fsSL "$r/native-pettingzoo.tar.gz" -o "$work/native.tar.gz"
+(cd "$work" &amp;&amp; echo 'f15b5efb206a04d205c3ac6cda264d8e1847c34cee1ef20dc0c4213e4cc9779f  native.tar.gz' | shasum -a 256 -c -)
+tar -xzf "$work/native.tar.gz" -C "$work"
+"$work/venv/bin/seatlab" study verify "$work/study.json" \
+  --expect-sha256 5100104afd2a2bd8194ee393e9cc68628046ccd750e7adfa04f7f843cc11afcf \
+  --html "$work/report.html"</code></pre>
+        <p class="fine">Expect 8 complete matches and 5 changed steps. A verified report can still contain a failed policy or missing evidence.</p>
+      </li>
+      <li>
+        <h3>Record your own Harbor task</h3>
+        <p>Start from the 2-seat <a href="https://github.com/PeterMakhnatch/harbor-seatlab/tree/v0.10.0/examples/receipt-board">receipt board</a>. Export each world-accepted actor receipt with 3 helpers. Pass the digest the actor returned; never recompute it.</p>
+<pre tabindex="0" aria-label="Recording helpers"><code>from seatlab.author import accepted_frame, decision_from_frame, episode_from_frames</code></pre>
+        <p class="fine">The offline path needs no Harbor installation. The native path uses Docker and no model key. See the <a href="https://github.com/PeterMakhnatch/harbor-seatlab/blob/v0.10.0/docs/authoring.md">author guide</a>.</p>
+      </li>
+    </ol>
+  </section>
+
+  <section class="proofs wrap" aria-labelledby="pf-title">
+    <h2 id="pf-title">Proofs and limits</h2>
+    <ul class="links">
+      <li><a href="https://github.com/PeterMakhnatch/harbor-multiagent/blob/feat/seatlab-pettingzoo/adapters/pettingzoo-seats/results.md">PettingZoo results and protocol</a> <span>native attempts, branches, Ubuntu repeat</span></li>
+      <li><a href="https://github.com/PeterMakhnatch/harbor-seatlab/blob/v0.10.0/docs/evidence.md">Stable evidence note, v0.10.0</a> <span>pinned digests for the calendar and team studies</span></li>
+      <li><a href="https://github.com/PeterMakhnatch/harbor-seatlab/releases/tag/v0.10.0">Release v0.10.0</a> <span>wheel, archives, and offline report files</span></li>
+    </ul>
+    <ul class="limits">
+      <li>Reproducing a decision does not make it a good decision.</li>
+      <li>The Hanabi data concern 2 scripted conventions, not the general strength of a model.</li>
+      <li>Simulated branches need an explicit deterministic simulator. They cannot forecast a human or a hosted model.</li>
+      <li>The 17 PettingZoo attempts are not 17 independent game seeds.</li>
+    </ul>
+  </section>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <p>SeatLab is <a href="https://github.com/PeterMakhnatch/harbor-seatlab">open source</a> under Apache-2.0. It is independent of Olam Labs and the upstream Harbor project. This page uses no scripts, cookies, or trackers.</p>
+  </div>
+</footer>
+</body>
+</html>

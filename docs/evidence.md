@@ -4,7 +4,9 @@ A team can earn the same score after its members make different decisions. SeatL
 
 ## Start without Docker or an API key
 
-Download the [calendar report](https://github.com/PeterMakhnatch/harbor-seatlab/releases/download/v0.10.0/calendar.html) and open the file in your browser. It needs no server or network connection. Expand `first8-per-member`, then compare it with the unchanged-input control. Each section names its own denominator. You can also download the [Hanabi and kitchen report](https://github.com/PeterMakhnatch/harbor-seatlab/releases/download/v0.10.0/team.html).
+Open the [live gallery](https://petermakhnatch.github.io/harbor-seatlab/) in a browser. The PettingZoo report compares real team runs across policies, languages and operating systems. The [calendar report](https://petermakhnatch.github.io/harbor-seatlab/calendar.html) tests a smaller view on 200 cases. Expand `first8-per-member`, then compare it with the unchanged-input control. Each section names its own denominator.
+
+For offline use, download the [PettingZoo report](https://github.com/PeterMakhnatch/harbor-seatlab/releases/download/v0.10.0/pettingzoo.html), [calendar report](https://github.com/PeterMakhnatch/harbor-seatlab/releases/download/v0.10.0/calendar.html), or [Hanabi and kitchen report](https://github.com/PeterMakhnatch/harbor-seatlab/releases/download/v0.10.0/team.html). Open the file in your browser. It needs no server or network connection.
 
 ![A verified native calendar study with its first check open](calendar-report.png)
 
