@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import cast
 
 from . import tape as wire
+from .launch_registry import verify_launch_registry
 from .matrix import build_matrix
 from .matrix_jobs import WORKLIST_SCHEMA, plan_native_jobs
 from .panel import panel_report
@@ -101,7 +102,15 @@ def _status(recheck: dict[str, object] | None, missing: list[str]) -> str:
     return cast(str, recheck["status"])
 
 
-def collect_jobs(source: Path, returns: Path, receipt: Path, out: Path) -> dict[str, object]:
+def collect_jobs(
+    source: Path,
+    returns: Path,
+    receipt: Path,
+    out: Path,
+    *,
+    launch_registry: Path | None = None,
+    expect_launch_sha256: str | None = None,
+) -> dict[str, object]:
     """Verify returned native jobs against the pinned source and publish ``out``.
 
     ``out`` must not exist. The source and the returns are only read. Everything is built
@@ -114,6 +123,10 @@ def collect_jobs(source: Path, returns: Path, receipt: Path, out: Path) -> dict[
         raise FileExistsError(f"refusing to overwrite existing output path: {out}")
     if not out.parent.is_dir():
         raise wire.TapeError(f"output parent directory does not exist: {out.parent}")
+    if (launch_registry is None) != (expect_launch_sha256 is None):
+        raise wire.TapeError(
+            "supply both the launcher registry and its separately trusted digest"
+        )
     pins = _pins(receipt)
     template, case_by_job, source_uuids = _verify_source(source, pins)
     expected = sorted(case_by_job)
@@ -123,6 +136,15 @@ def collect_jobs(source: Path, returns: Path, receipt: Path, out: Path) -> dict[
         jobs_dir = work / "jobs"
         jobs_dir.mkdir()
         received = snapshot_returns(returns, case_by_job, jobs_dir, source_uuids)
+        if launch_registry is not None and expect_launch_sha256 is not None:
+            verify_launch_registry(
+                launch_registry,
+                expect_launch_sha256,
+                pins["worklist_sha256"],
+                set(expected),
+                source_uuids,
+                received,
+            )
         have = set(received)
         missing = [job for job in expected if job not in have]
 
@@ -163,6 +185,10 @@ def collect_jobs(source: Path, returns: Path, receipt: Path, out: Path) -> dict[
             "schema": COLLECTION_SCHEMA,
             "status": _status(recheck, missing),
             "source_pins": pins,
+            "assignment_basis": "launch-registry"
+            if launch_registry is not None
+            else "return-folder",
+            "launch_registry_sha256": expect_launch_sha256,
             "native_trials": received,
             "jobs": {"expected": expected, "received": sorted(have), "missing": missing},
             "recheck": None if recheck is None else recheck["counts"],

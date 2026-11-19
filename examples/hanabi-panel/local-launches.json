@@ -1,0 +1,10 @@
+{
+  "schema": "seatlab.launch-registry/v1",
+  "trials": {
+    "d00.ll": "8bf2ba74-f176-42b5-bd46-2da4ae956408",
+    "d00.lr": "15a55fee-ecbf-4946-9389-bea51a036fbd",
+    "d00.rl": "e3687224-f0fd-4bea-b54a-fe416b6b8743",
+    "d00.rr": "84670d85-f634-408c-b756-3e582aa2a4bf"
+  },
+  "worklist_sha256": "6160278bb1ced9b2b18d770e7b4966d3f3b08398cfcf430d724da07dcb2ae327"
+}

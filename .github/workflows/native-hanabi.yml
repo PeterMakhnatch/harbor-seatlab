@@ -114,6 +114,20 @@ jobs:
           test -f "$config"
           # One world, no retry. The other three registered teams stay unattempted here.
           "$PWD/stock-olam/.venv/bin/harbor" trial start -c "$config"
+          # Launch receipt: the stock trial id, read before any public export. It comes from
+          # the stock config's trial_name and the stock result.json, never from world-order,
+          # role files, or a label derived from them. It vouches for launch identity only.
+          name="$(jq -er '.trial_name | select(type == "string" and test("^[A-Za-z0-9][A-Za-z0-9._-]*$"))' "$config")"
+          res="$root/trials/$name/result.json"
+          test -f "$res"
+          test ! -L "$res"
+          jq -e --arg job "$JOB" --arg name "$name" '
+            select(.trial_name == $name and (.id | type == "string") and
+              (.id | test("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"))) |
+            {schema: "seatlab.launch-receipt/v1", job: $job, trial_name: $name, id: .id}' \
+            "$res" > "$RUNNER_TEMP/launch.json.tmp"
+          mkdir "$RUNNER_TEMP/launch-receipt"
+          mv "$RUNNER_TEMP/launch.json.tmp" "$RUNNER_TEMP/launch-receipt/launch.json"
           mkdir "$RUNNER_TEMP/public-result"
           "$py" "$d/collect.py" "$root" "$RUNNER_TEMP/forecasts.json" \
             --episodes "$RUNNER_TEMP/public-result/episodes" > "$RUNNER_TEMP/public-result/report.json"
@@ -140,6 +154,14 @@ jobs:
             ${{ runner.temp }}/job-evidence/order.json
           if-no-files-found: error
           retention-days: 7
+      - name: Upload the separate launch receipt for this one job
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: launch-${{ matrix.job }}
+          path: ${{ runner.temp }}/launch-receipt/launch.json
+          if-no-files-found: ignore
+          retention-days: 7
 
   compare:
     needs: [source, native]
@@ -163,21 +185,63 @@ jobs:
         with:
           name: native-hanabi-source
           path: ${{ runner.temp }}/source-download
-      - name: Create an empty return root for interrupted workers
-        run: mkdir "$RUNNER_TEMP/worker-returns"
+      - name: Create empty return roots for interrupted workers
+        run: mkdir "$RUNNER_TEMP/worker-returns" "$RUNNER_TEMP/launch-receipts"
       - name: Download native returns without merging worker directories
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           pattern: d*.*
           merge-multiple: false
           path: ${{ runner.temp }}/worker-returns
-      - name: Collect the actual workers and recheck the frozen source
+      - name: Download the separate launch receipts without merging them
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: launch-d*.*
+          merge-multiple: false
+          path: ${{ runner.temp }}/launch-receipts
+      - name: Assemble the launch registry from the receipts and pin its digest
         run: |
           set -euo pipefail
+          mkdir "$RUNNER_TEMP/launch"
+          "$RUNNER_TEMP/analyst/bin/python" -I examples/hanabi-panel/native_registry.py receipts \
+            "$RUNNER_TEMP/launch-receipts" "$RUNNER_TEMP/source-download/source/worklist.json" \
+            --out "$RUNNER_TEMP/launch/launch-registry.json" | jq -er .launch_registry_sha256 > "$RUNNER_TEMP/launch/launch-registry.sha256"
+          cat "$RUNNER_TEMP/launch/launch-registry.json"
+      - name: Collect the actual workers with the launch registry and recheck the frozen source
+        run: |
+          set -euo pipefail
+          reg="$RUNNER_TEMP/launch/launch-registry.json"
+          sha="$(cat "$RUNNER_TEMP/launch/launch-registry.sha256")"
           "$RUNNER_TEMP/analyst/bin/seatlab" study collect-jobs "$RUNNER_TEMP/source-download/source" \
             "$RUNNER_TEMP/worker-returns" --receipt examples/hanabi-panel/source-build.json \
+            --launch-registry "$reg" --expect-launch-sha256 "$sha" \
             --out "$RUNNER_TEMP/native-result"
           jq -e '.selection == ["d00"] and .counts == {entries:8,stable:8,changed:0,unknown:0}' "$RUNNER_TEMP/native-result/recheck.json"
+          jq -e --arg sha "$sha" '.assignment_basis == "launch-registry" and .launch_registry_sha256 == $sha' \
+            "$RUNNER_TEMP/native-result/collection.json"
+      - name: Swap two real evidence folders on one native case
+        run: |
+          set -euo pipefail
+          reg="$RUNNER_TEMP/launch/launch-registry.json"
+          sha="$(cat "$RUNNER_TEMP/launch/launch-registry.sha256")"
+          swap="$RUNNER_TEMP/swapped-returns"
+          mkdir "$swap"
+          cp -R "$RUNNER_TEMP/worker-returns/d00.lr" "$swap/d00.ll"
+          cp -R "$RUNNER_TEMP/worker-returns/d00.ll" "$swap/d00.lr"
+          for id in d00.rl d00.rr; do cp -R "$RUNNER_TEMP/worker-returns/$id" "$swap/"; done
+          # Bound to the launch registry, the swap is refused and nothing is written.
+          code=0
+          "$RUNNER_TEMP/analyst/bin/seatlab" study collect-jobs "$RUNNER_TEMP/source-download/source" \
+            "$swap" --receipt examples/hanabi-panel/source-build.json \
+            --launch-registry "$reg" --expect-launch-sha256 "$sha" \
+            --out "$RUNNER_TEMP/swapped-bound" || code=$?
+          test "$code" -eq 2
+          test ! -e "$RUNNER_TEMP/swapped-bound"
+          # Without the registry, the behavior collector cannot see the swap.
+          "$RUNNER_TEMP/analyst/bin/seatlab" study collect-jobs "$RUNNER_TEMP/source-download/source" \
+            "$swap" --receipt examples/hanabi-panel/source-build.json \
+            --out "$RUNNER_TEMP/swapped-unbound"
+          jq -e '.counts == {entries:8,stable:8,changed:0,unknown:0}' "$RUNNER_TEMP/swapped-unbound/recheck.json"
       - name: Withhold one valid worker and check the affected criteria only
         run: |
           set -euo pipefail
@@ -187,11 +251,20 @@ jobs:
           code=0
           "$RUNNER_TEMP/analyst/bin/seatlab" study collect-jobs "$RUNNER_TEMP/source-download/source" \
             "$subset" --receipt examples/hanabi-panel/source-build.json \
+            --launch-registry "$RUNNER_TEMP/launch/launch-registry.json" --expect-launch-sha256 "$(cat "$RUNNER_TEMP/launch/launch-registry.sha256")" \
             --out "$RUNNER_TEMP/without-rr" || code=$?
           test "$code" -eq 3
           jq -e '.status == "incomplete" and .jobs.missing == ["d00.rr"] and
             .recheck == {entries:8,stable:4,changed:0,unknown:4}' "$RUNNER_TEMP/without-rr/collection.json"
           cp "$RUNNER_TEMP/without-rr/collection.json" "$RUNNER_TEMP/native-result/withheld-worker.json"
+      - name: Retain the separate launcher registry even if a worker is missing
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: native-hanabi-launch-registry
+          path: ${{ runner.temp }}/launch/
+          if-no-files-found: error
+          retention-days: 7
       - name: Retain the sanitized result and complete candidate
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
