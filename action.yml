@@ -1,0 +1,28 @@
+name: SeatLab study verification
+description: Verify a local SeatLab study against a trusted manifest SHA-256. No network, no installs.
+inputs:
+  manifest:
+    description: Relative path of the study manifest under GITHUB_WORKSPACE.
+    required: true
+  expected-sha256:
+    description: Trusted lowercase 64-character SHA-256 of the canonical manifest.
+    required: true
+outputs:
+  report:
+    description: Path of the verification JSON file.
+    value: ${{ steps.verify.outputs.report }}
+  html:
+    description: Path of the self-contained HTML report.
+    value: ${{ steps.verify.outputs.html }}
+  checks:
+    description: Number of verified checks.
+    value: ${{ steps.verify.outputs.checks }}
+runs:
+  using: composite
+  steps:
+    - id: verify
+      shell: bash
+      env:
+        SEATLAB_MANIFEST: ${{ inputs.manifest }}
+        SEATLAB_EXPECTED_SHA256: ${{ inputs.expected-sha256 }}
+      run: python3 -I -S "$GITHUB_ACTION_PATH/action/verify.py"
