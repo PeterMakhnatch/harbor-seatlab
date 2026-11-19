@@ -187,10 +187,7 @@ class TeamAlignmentContractTests(unittest.TestCase):
 
         bad_kind = _team_check()
         bad_kind["kind"] = "script"
-        with self.assertRaisesRegex(
-            wire.TapeError,
-            "study check kind must be 'calibration', 'alignment', or 'team-alignment'",
-        ):
+        with self.assertRaises(wire.TapeError):
             parse_recipe({"schema": RECIPE_SCHEMA, "checks": [bad_kind]})
 
     def test_manifest_requires_order_files_in_exact_file_coverage(self) -> None:

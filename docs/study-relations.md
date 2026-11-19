@@ -37,19 +37,21 @@ Every row has all 16 fields. A `null` value means that the report has no value f
 | `study_sha256` | The canonical manifest digest. It equals the pin that you supplied. |
 | `report_sha256` | The verified report digest for this check. It equals `checks[].report_sha256` from `study verify`. |
 | `check_id` | The registered check identifier. |
-| `kind` | `team-alignment`, `calibration` or `alignment`. |
-| `pair_index` | The 1-based position of the comparison within its check, in report order. A team alignment has 1 row. |
+| `kind` | `team-alignment`, `calibration`, `alignment` or `role-trajectory`. |
+| `pair_index` | The 1-based position of the comparison within its check, in report order. A team alignment or role trajectory has 1 row. |
 | `case_sha256` | The registered digest of the private task case. |
 | `source_native_trial_id`, `target_native_trial_id` | Canonical native UUIDs. `null` if the publisher registered that arm as unavailable. |
-| `role` | The role name for a role `alignment` row. `null` for the other kinds. |
+| `role` | The named role for `alignment` and `role-trajectory`. `null` for the other kinds. |
 | `status` | The status of this comparison in the verified report. |
-| `boundary_unit` | `world_step` for `team-alignment`, `role_turn` for `alignment`, `null` for `calibration`. |
-| `boundary` | The first different world step or role turn, if the report has one. |
-| `matched_prefix` | The number of equal world steps or role turns before the boundary. |
-| `native_action_changed` | Calibration only: whether the 2 recorded native actions differ. `null` if either action is unknown. |
+| `boundary_unit` | `world_step` for `team-alignment` and `role-trajectory`, `role_turn` for `alignment`, `null` for `calibration`. |
+| `boundary` | The reported boundary. For a role trajectory this is a **schedule** boundary, not its first changed view or action. |
+| `matched_prefix` | Equal decision steps or turns for the alignment kinds. Otherwise `null`. Matching schedules need not have matching decisions. |
+| `native_action_changed` | Calibration: whether two recorded actions differ. Role trajectory: `true` if any observed accepted action differs. A negative requires a complete schedule and at least 1 action, all known and equal. Otherwise `null`. |
 | `reproduced` | Calibration only: whether input, action and score all match. |
 
 For `team-alignment`, `boundary` and `matched_prefix` come from `boundary_step` and `matched_steps`. For `alignment`, they come from `boundary_turn` and `matched_prefix`. Calibration rows set both to `null`, and the alignment kinds set `native_action_changed` and `reproduced` to `null`. Read `status` first. For example, a `missing` alignment row has no compared turns, so its `matched_prefix` is not a measurement.
+
+See the [role-trajectory recipe](trajectory-studies.md) for a measured example. An absent selected field makes the selected view unknown. It does not erase an independently observed action.
 
 The rows identify cases and checks on purpose. They are not anonymous. Treat check identifiers and case digests as you treat the study itself.
 
